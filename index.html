@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FarmLedger — Investment & Cash Flow Tracker</title>
+  <meta name="description" content="Track your farm investments and cash inflows. Data synced to Google Sheets." />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+  <!-- ══════════ HEADER ══════════ -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="header-logo">🌾</div>
+      <div>
+        <div class="header-title">FarmLedger</div>
+        <div class="header-sub">Investment & Cash Flow Tracker</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <select id="globalLocationFilter"
+        style="background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); border-radius:8px; padding:6px 10px; color:#fff; font-family:'Inter',sans-serif; font-size:13px;">
+        <option value="all">🌍 All Locations</option>
+      </select>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="connDot"
+          style="width:8px;height:8px;border-radius:50%;background:var(--accent-green);box-shadow:0 0 8px var(--accent-green);transition:all 0.3s;">
+        </div>
+        <span id="connLabel" class="header-sub" style="color:var(--accent-green);">Connected securely</span>
+      </div>
+      <button id="refreshBtn" title="Refresh data"
+        style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;">↻</button>
+    </div>
+  </header>
+
+  <!-- ══════════ NAV TABS ══════════ -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="nav-tab" data-tab="investments" onclick="switchTab('investments')">📉 Add Investment</button>
+    <button class="nav-tab" data-tab="cashinflows" onclick="switchTab('cashinflows')">💵 Add Cash Inflow</button>
+    <button class="nav-tab" data-tab="history" onclick="switchTab('history')">📋 History</button>
+  </div>
+
+  <main class="main">
+
+    <!-- ══════════ DASHBOARD ══════════ -->
+    <div id="dashboard" class="tab-content active">
+      <div class="cards-grid">
+        <div class="stat-card invested">
+          <div class="stat-icon">📉</div>
+          <div class="stat-label">Total Invested</div>
+          <div class="stat-value blue" id="stat-invested">TZS 0</div>
+          <div class="stat-sub" id="stat-inv-count">0 records</div>
+        </div>
+        <div class="stat-card cashout">
+          <div class="stat-icon">💵</div>
+          <div class="stat-label">Total Cash Inflows</div>
+          <div class="stat-value green" id="stat-cashout">TZS 0</div>
+          <div class="stat-sub" id="stat-co-count">0 records</div>
+        </div>
+        <div class="stat-card net">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Net Profit / Loss</div>
+          <div class="stat-value gold" id="stat-net">TZS 0</div>
+          <div class="stat-sub">Inflows minus Investment</div>
+        </div>
+        <div class="stat-card roi">
+          <div class="stat-icon">📐</div>
+          <div class="stat-label">ROI</div>
+          <div class="stat-value" id="stat-roi">—</div>
+          <div class="stat-sub">Return on Investment</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📊 Monthly Overview — Investments vs Cash Inflows</div>
+          <span class="save-indicator" id="saveIndicator">✓ Saved to Google Sheets</span>
+        </div>
+        <div class="panel-body">
+          <div class="chart-wrapper">
+            <canvas id="mainChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ ADD INVESTMENT ══════════ -->
+    <div id="investments" class="tab-content">
+      <div class="add-panel">
+        <form id="inv-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="inv-date">Date *</label>
+              <input type="date" id="inv-date" required />
+            </div>
+            <div class="form-group">
+              <label for="inv-location">Site / Location *</label>
+              <input type="text" id="inv-location" placeholder="e.g. Site A, Block B..." required />
+            </div>
+            <div class="form-group">
+              <label for="inv-amount">Amount (TZS) *</label>
+              <input type="number" id="inv-amount" min="1" step="any" placeholder="e.g. 50000" required />
+            </div>
+            <div class="form-group">
+              <label for="inv-category">Category *</label>
+              <select id="inv-category" required>
+                <option value="" disabled selected>— Select category —</option>
+                <optgroup label="🌱 Crop Inputs">
+                  <option>Seeds</option>
+                  <option>Fertilizer (Basal)</option>
+                  <option>Fertilizer (Top Dressing)</option>
+                  <option>Pesticides</option>
+                  <option>Herbicides / Weedicides</option>
+                  <option>Fungicides</option>
+                </optgroup>
+                <optgroup label="💧 Water & Land">
+                  <option>Irrigation</option>
+                  <option>Land Rent / Lease</option>
+                  <option>Land Preparation</option>
+                  <option>Soil Testing</option>
+                </optgroup>
+                <optgroup label="👷 Labor">
+                  <option>Planting Labor</option>
+                  <option>Weeding Labor</option>
+                  <option>Harvesting Labor</option>
+                  <option>General Farm Labor</option>
+                  <option>Supervisory Wages</option>
+                </optgroup>
+                <optgroup label="🚜 Equipment & Tools">
+                  <option>Equipment Purchase</option>
+                  <option>Equipment Rental (Tractor)</option>
+                  <option>Equipment Rental (Other)</option>
+                  <option>Tools & Small Equipment</option>
+                  <option>Equipment Repair & Maintenance</option>
+                  <option>Fuel & Lubricants</option>
+                </optgroup>
+                <optgroup label="🐄 Livestock">
+                  <option>Animal Purchase</option>
+                  <option>Animal Feed</option>
+                  <option>Veterinary Services</option>
+                  <option>Vaccines & Medicine</option>
+                  <option>Livestock Housing</option>
+                </optgroup>
+                <optgroup label="🚚 Logistics">
+                  <option>Transport (Inputs)</option>
+                  <option>Transport (Produce)</option>
+                  <option>Packaging & Storage</option>
+                  <option>Cold Storage / Warehouse</option>
+                </optgroup>
+                <optgroup label="💼 Finance & Admin">
+                  <option>Loan Interest / Repayment</option>
+                  <option>Insurance Premium</option>
+                  <option>Permit & License Fees</option>
+                  <option>Extension / Consultancy Services</option>
+                  <option>Training & Capacity Building</option>
+                </optgroup>
+                <optgroup label="🏗 Infrastructure">
+                  <option>Fence Construction</option>
+                  <option>Store / Shed Construction</option>
+                  <option>Water System Installation</option>
+                </optgroup>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group form-full">
+              <label for="inv-notes">Notes</label>
+              <textarea id="inv-notes" placeholder="Optional — supplier name, quantity, batch info…"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" style="background:linear-gradient(135deg,#ff5252,#c62828);">✚
+              Record Investment</button>
+            <button type="reset" class="btn btn-secondary"
+              onclick="document.getElementById('inv-date').value=today()">Clear</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ══════════ ADD CASH INFLOW ══════════ -->
+    <div id="cashinflows" class="tab-content">
+      <div class="add-panel">
+        <form id="ci-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="ci-date">Date *</label>
+              <input type="date" id="ci-date" required />
+            </div>
+            <div class="form-group">
+              <label for="ci-location">Site / Location *</label>
+              <input type="text" id="ci-location" placeholder="e.g. Site A, Block B..." required />
+            </div>
+            <div class="form-group">
+              <label for="ci-amount">Amount (TZS) *</label>
+              <input type="number" id="ci-amount" min="1" step="any" placeholder="e.g. 200000" required />
+            </div>
+            <div class="form-group">
+              <label for="ci-category">Category *</label>
+              <select id="ci-category" required>
+                <option value="" disabled selected>— Select category —</option>
+                <optgroup label="🌾 Crop Sales (main)">
+                  <option>Maize Sale</option>
+                  <option>Rice Sale</option>
+                  <option>Wheat Sale</option>
+                  <option>Cassava Sale</option>
+                  <option>Sweet Potato Sale</option>
+                  <option>Irish Potato Sale</option>
+                  <option>Sunflower Sale</option>
+                  <option>Sorghum Sale</option>
+                  <option>Millet Sale</option>
+                  <option>Beans / Legumes Sale</option>
+                  <option>Groundnut Sale</option>
+                  <option>Sesame Sale</option>
+                  <option>Cotton Sale</option>
+                  <option>Tobacco Sale</option>
+                  <option>Sugarcane Sale</option>
+                  <option>Vegetables Sale</option>
+                  <option>Fruits Sale</option>
+                  <option>Other Crop Sale</option>
+                </optgroup>
+                <optgroup label="🐄 Livestock Sales">
+                  <option>Cattle Sale</option>
+                  <option>Goat / Sheep Sale</option>
+                  <option>Pig Sale</option>
+                  <option>Poultry / Chicken Sale</option>
+                  <option>Eggs Sale</option>
+                  <option>Milk / Dairy Sale</option>
+                  <option>Fish / Aquaculture Sale</option>
+                </optgroup>
+                <optgroup label="🔧 Asset & Service Income">
+                  <option>Equipment Rental Income</option>
+                  <option>Land Rental Income</option>
+                  <option>By-Product Sale (Straw, Husks…)</option>
+                  <option>Processed Product Sale</option>
+                </optgroup>
+                <optgroup label="💵 Grants & Finance">
+                  <option>Government Subsidy</option>
+                  <option>NGO / Development Grant</option>
+                  <option>Loan Received</option>
+                  <option>Insurance Claim Payout</option>
+                  <option>Advance Payment from Buyer</option>
+                </optgroup>
+                <option>Other Income</option>
+              </select>
+            </div>
+            <div class="form-group form-full">
+              <label for="ci-notes">Notes</label>
+              <textarea id="ci-notes" placeholder="Optional — buyer name, quantity sold, market price…"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">✚ Record Cash Inflow</button>
+            <button type="reset" class="btn btn-secondary"
+              onclick="document.getElementById('ci-date').value=today()">Clear</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ══════════ HISTORY ══════════ -->
+    <div id="history" class="tab-content">
+      <div class="panel" style="border-top:none;border-radius:0 var(--radius) var(--radius) var(--radius);">
+        <div class="table-controls">
+          <input class="search-box" id="histSearch" type="text" placeholder="🔍  Search by category, notes, date…" />
+          <select class="filter-select" id="histFilter">
+            <option value="all">All Records</option>
+            <option value="investments">Investments Only</option>
+            <option value="cashinflows">Cash Inflows Only</option>
+          </select>
+        </div>
+        <div class="table-wrap" style="padding:16px 24px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Location</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Amount (TZS)</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="histBody">
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <p>Connect your Google Sheet to load records.</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ══════════ TOAST ══════════ -->
+  <div id="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
