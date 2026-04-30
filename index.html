@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FarmLedger — Investment & Cash Flow Tracker</title>
+  <title>freshBABA FARMS — Investment & Cash Flow Tracker</title>
   <meta name="description" content="Track your farm investments and cash inflows. Data synced to Google Sheets." />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -12,12 +12,47 @@
 
 <body>
 
-  <!-- ══════════ HEADER ══════════ -->
+  <!-- ══════════ LOCK SCREEN ══════════ -->
+  <div id="lockScreen" class="lock-screen">
+    <div class="lock-container">
+      <div class="lock-logo">
+        <img src="logo.jpg" alt="freshBABA FARMS Logo"
+          style="width:100%; height:100%; object-fit:contain; border-radius:10px;">
+      </div>
+      <h2 style="margin-bottom:12px; font-size:22px; color:var(--text-primary);">freshBABA FARMS</h2>
+      <p style="margin-bottom:24px; color:var(--text-secondary); font-size:14px;">Enter PIN to access your account</p>
+
+      <div class="pin-display" id="pinDisplay">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+
+      <div class="pin-pad">
+        <button class="pin-btn" onclick="enterPin(1)">1</button>
+        <button class="pin-btn" onclick="enterPin(2)">2</button>
+        <button class="pin-btn" onclick="enterPin(3)">3</button>
+        <button class="pin-btn" onclick="enterPin(4)">4</button>
+        <button class="pin-btn" onclick="enterPin(5)">5</button>
+        <button class="pin-btn" onclick="enterPin(6)">6</button>
+        <button class="pin-btn" onclick="enterPin(7)">7</button>
+        <button class="pin-btn" onclick="enterPin(8)">8</button>
+        <button class="pin-btn" onclick="enterPin(9)">9</button>
+        <button class="pin-btn pin-action" onclick="clearPin()">C</button>
+        <button class="pin-btn" onclick="enterPin(0)">0</button>
+        <button class="pin-btn pin-action" onclick="submitPin()">OK</button>
+      </div>
+
+      <div id="pinError" style="color:var(--accent-red); font-size:13px; margin-top:20px; min-height:20px;"></div>
+    </div>
+  </div> <!-- ══════════ HEADER ══════════ -->
   <header class="header">
     <div class="header-brand">
-      <div class="header-logo">🌾</div>
+      <div class="header-logo" style="background:none;"><img src="logo.jpg" alt="Logo"
+          style="width:100%; height:100%; object-fit:contain; border-radius:10px;"></div>
       <div>
-        <div class="header-title">FarmLedger</div>
+        <div class="header-title">freshBABA FARMS</div>
         <div class="header-sub">Investment & Cash Flow Tracker</div>
       </div>
     </div>
@@ -32,6 +67,8 @@
         </div>
         <span id="connLabel" class="header-sub" style="color:var(--accent-green);">Connected securely</span>
       </div>
+      <button id="privacyBtn" title="Toggle Privacy Mode" onclick="togglePrivacy()"
+        style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;">👁️</button>
       <button id="refreshBtn" title="Refresh data"
         style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;">↻</button>
     </div>
