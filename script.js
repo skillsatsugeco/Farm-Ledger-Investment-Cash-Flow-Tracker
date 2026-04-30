@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════
-//  FarmLedger — Frontend Script
+//  freshBABA FARMS — Frontend Script
 //  Backend: Google Apps Script Web App
 // ══════════════════════════════════════════════════
 
@@ -379,6 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('inv-date').value = today();
     document.getElementById('ci-date').value = today();
 
+    // Load data deferred after unlock if needed, but keeping it here for now
+    // Or we could wait for unlock. Let's just load it.
     loadData();
 
     document.getElementById('globalLocationFilter').addEventListener('change', renderAll);
@@ -388,5 +390,69 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('histFilter').addEventListener('change', renderHistory);
     document.getElementById('refreshBtn').addEventListener('click', loadData);
 
-    renderAll();
+
+    // ── Lock Screen Logic ──────────────────────────────
+    let currentPin = '';
+    const correctPin = '1234';
+
+    function updatePinDisplay() {
+        const dots = document.querySelectorAll('#pinDisplay .pin-dot');
+        dots.forEach((dot, index) => {
+            if (index < currentPin.length) {
+                dot.classList.add('filled');
+            } else {
+                dot.classList.remove('filled', 'error');
+            }
+        });
+    }
+
+    window.enterPin = function (num) {
+        const errEl = document.getElementById('pinError');
+        if (errEl) errEl.textContent = '';
+
+        if (currentPin.length < 4) {
+            currentPin += num;
+            updatePinDisplay();
+        }
+    }
+
+    window.clearPin = function () {
+        currentPin = '';
+        const errEl = document.getElementById('pinError');
+        if (errEl) errEl.textContent = '';
+        updatePinDisplay();
+    }
+
+    window.submitPin = function () {
+        if (currentPin.length !== 4) return;
+
+        if (currentPin === correctPin) {
+            // success
+            document.getElementById('lockScreen').classList.add('hidden');
+            showToast('Access Granted ✓', 'success');
+
+            // Load data only after unlock to save unnecessary background requests
+            // loadData(); // If we prefer, we could defer loadData until here.
+        } else {
+            // fail
+            const dots = document.querySelectorAll('#pinDisplay .pin-dot');
+            dots.forEach(dot => dot.classList.add('error'));
+            const errEl = document.getElementById('pinError');
+            if (errEl) errEl.textContent = 'Incorrect PIN. Try again.';
+
+            setTimeout(() => {
+                currentPin = '';
+                updatePinDisplay();
+            }, 500);
+        }
+    }
 });
+
+// ── Privacy Mode Logic ──────────────────────────────
+window.togglePrivacy = function () {
+    const isPrivacy = document.body.classList.toggle('privacy-enabled');
+    const btn = document.getElementById('privacyBtn');
+    if (btn) {
+        btn.textContent = isPrivacy ? '🕶️' : '👁️';
+    }
+};
