@@ -1,12 +1,15 @@
 // ══════════════════════════════════════════════════
-//  FarmLedger — Google Apps Script Backend
+//  freshBABA FARMS — Google Apps Script Backend
 //  Deploy as: Web App → Execute as: Me → Access: Anyone
 // ══════════════════════════════════════════════════
 
 const SHEET_NAME_INV  = 'Investments';
 const SHEET_NAME_CASH = 'CashInflows';
+const SHEET_NAME_SCOUT = 'FieldScouting';
+
 const HEADERS_INV     = ['ID', 'Date', 'Location', 'Category', 'Amount', 'Notes', 'Deleted'];
 const HEADERS_CASH    = ['ID', 'Date', 'Location', 'Category', 'Amount', 'Notes', 'Deleted'];
+const HEADERS_SCOUT   = ['ID', 'Date', 'Location', 'Observations', 'PhotoUrl', 'AudioUrl', 'Deleted'];
 
 // ── Helpers ───────────────────────────────────────
 function getWorkingSpreadsheet() {
@@ -22,7 +25,7 @@ function getWorkingSpreadsheet() {
   }
   
   // If no active sheet and no stored ID, create a new spreadsheet
-  ss = SpreadsheetApp.create('FarmLedger Database');
+  ss = SpreadsheetApp.create('freshBABA FARMS Database');
   props.setProperty('SPREADSHEET_ID', ss.getId());
   return ss;
 }
@@ -68,10 +71,21 @@ function doGet() {
   try {
     const invSheet  = getOrCreateSheet(SHEET_NAME_INV,  HEADERS_INV);
     const cashSheet = getOrCreateSheet(SHEET_NAME_CASH, HEADERS_CASH);
+    const scoutSheet = getOrCreateSheet(SHEET_NAME_SCOUT, HEADERS_SCOUT);
+    
+    // Custom mapper for scouting sheet
+    const scoutData = sheetToObjects(scoutSheet, HEADERS_SCOUT).map(r => ({
+      ...r,
+      observation: r.Category, // Using Category field from generic mapper for pos 3
+      photoUrl: r.Amount || '', // Using Amount field from generic mapper for pos 4
+      audioUrl: r.Notes || ''   // Using Notes field from generic mapper for pos 5
+    }));
+
     return corsResponse({
       success: true,
       investments: sheetToObjects(invSheet,  HEADERS_INV),
       cashInflows:  sheetToObjects(cashSheet, HEADERS_CASH),
+      scouting: scoutData,
     });
   } catch (e) {
     return corsResponse({ success: false, error: e.message });
@@ -96,8 +110,51 @@ function doPost(e) {
       return corsResponse({ success: true });
     }
 
+    if (action === 'add_scouting') {
+      const sheet = getOrCreateSheet(SHEET_NAME_SCOUT, HEADERS_SCOUT);
+      let photoUrl = '';
+      let audioUrl = '';
+      
+      let folder;
+      const folderIterator = DriveApp.getFoldersByName('freshBABA_ScoutingFiles');
+      if (folderIterator.hasNext()) {
+        folder = folderIterator.next();
+      } else {
+        folder = DriveApp.createFolder('freshBABA_ScoutingFiles');
+      }
+
+      if (body.photoBase64) {
+        try {
+          const decoded = Utilities.base64Decode(body.photoBase64.split(',')[1]);
+          const blob = Utilities.newBlob(decoded, body.photoMimeType || 'image/jpeg', 'photo_' + body.id + '.jpg');
+          const file = folder.createFile(blob);
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          photoUrl = file.getUrl();
+        } catch (e) {
+          Logger.log('Photo upload failed: ' + e.message);
+        }
+      }
+      
+      if (body.audioBase64) {
+        try {
+          const decoded = Utilities.base64Decode(body.audioBase64.split(',')[1]);
+          const blob = Utilities.newBlob(decoded, body.audioMimeType || 'audio/webm', 'audio_' + body.id + '.webm');
+          const file = folder.createFile(blob);
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          audioUrl = file.getUrl();
+        } catch (e) {
+          Logger.log('Audio upload failed: ' + e.message);
+        }
+      }
+      
+      sheet.appendRow([body.id, body.date, body.location || '', body.observation, photoUrl, audioUrl, false]);
+      return corsResponse({ success: true, photoUrl: photoUrl, audioUrl: audioUrl });
+    }
+
     if (action === 'delete') {
-      const sheetName = body.type === 'investment' ? SHEET_NAME_INV : SHEET_NAME_CASH;
+      const sheetName = body.type === 'investment' ? SHEET_NAME_INV :
+                        body.type === 'cashinflow' ? SHEET_NAME_CASH :
+                        SHEET_NAME_SCOUT;
       const sheet     = getOrCreateSheet(sheetName, HEADERS_INV);
       const rows      = sheet.getDataRange().getValues();
       for (let i = 1; i < rows.length; i++) {
@@ -120,7 +177,7 @@ function setupForms() {
   const ss = getWorkingSpreadsheet();
   
   // 1. Create Investments Form
-  const invForm = FormApp.create('FarmLedger - Add Investment');
+  const invForm = FormApp.create('freshBABA FARMS - Add Investment');
   invForm.setDescription('Record a new farm investment.');
   invForm.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
   
@@ -146,7 +203,7 @@ function setupForms() {
   invForm.addParagraphTextItem().setTitle('Notes');
 
   // 2. Create Cash Inflows Form
-  const cashForm = FormApp.create('FarmLedger - Add Cash Inflow');
+  const cashForm = FormApp.create('freshBABA FARMS - Add Cash Inflow');
   cashForm.setDescription('Record a new farm cash inflow.');
   cashForm.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
   
