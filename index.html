@@ -79,6 +79,7 @@
     <button class="nav-tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
     <button class="nav-tab" data-tab="investments" onclick="switchTab('investments')">📉 Add Investment</button>
     <button class="nav-tab" data-tab="cashinflows" onclick="switchTab('cashinflows')">💵 Add Cash Inflow</button>
+    <button class="nav-tab" data-tab="scouting" onclick="switchTab('scouting')">📝 Field Scouting</button>
     <button class="nav-tab" data-tab="history" onclick="switchTab('history')">📋 History</button>
   </div>
 
@@ -295,6 +296,58 @@
               onclick="document.getElementById('ci-date').value=today()">Clear</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- ══════════ FIELD SCOUTING ══════════ -->
+    <div id="scouting" class="tab-content">
+      <div class="add-panel">
+        <form id="scout-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="scout-date">Date *</label>
+              <input type="date" id="scout-date" required />
+            </div>
+            <div class="form-group">
+              <label for="scout-location">Site / Location *</label>
+              <input type="text" id="scout-location" placeholder="e.g. Site A, Block B..." required />
+            </div>
+            <div class="form-group form-full">
+              <label for="scout-observation">Observation / Notes *</label>
+              <textarea id="scout-observation" placeholder="What did you see? Pests, crop health, problems..."
+                required></textarea>
+            </div>
+            <div class="form-group">
+              <label>Take Photo</label>
+              <input type="file" id="scout-photo" accept="image/*" capture="environment" style="padding: 6px;" />
+              <img id="scout-photo-preview"
+                style="max-width: 100%; margin-top: 10px; border-radius: 8px; display: none;" />
+            </div>
+            <div class="form-group">
+              <label>Record Voice Note</label>
+              <button type="button" id="recordBtn" class="record-btn">🎤 Start Recording</button>
+              <audio id="scout-audio-preview" controls style="width: 100%; margin-top: 10px; display: none;"></audio>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary"
+              style="background:linear-gradient(135deg,#00b0ff,#0069c0); color:#fff;">✚ Save Log</button>
+            <button type="reset" class="btn btn-secondary"
+              onclick="document.getElementById('scout-date').value=today(); clearScoutMedia();">Clear</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel" style="margin-top: 24px;">
+        <div class="panel-header">
+          <div class="panel-title">📋 Recent Scouting Logs</div>
+        </div>
+        <div class="panel-body" id="scout-logs-container">
+          <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <p>No scouting logs yet.</p>
+          </div>
+        </div>
       </div>
     </div>
 
