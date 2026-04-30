@@ -6,7 +6,7 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyZXruOGI9pcIg-sbzv-LJxuYfMZj3PIqbDsrsMcCbifxL-7RZbfak7dPCfkYh2gn8HBw/exec';
 
 let state = {
-    data: { investments: [], cashInflows: [] },
+    data: { investments: [], cashInflows: [], scouting: [] },
     chart: null,
     loading: false,
 };
@@ -78,6 +78,7 @@ async function loadData() {
         if (json.success) {
             state.data.investments = json.investments || [];
             state.data.cashInflows = json.cashInflows || [];
+            state.data.scouting = json.scouting || [];
             updateLocationFilterOptions();
             renderAll();
             showToast('Data loaded ✓', 'success');
@@ -189,6 +190,7 @@ function renderAll() {
     renderDashboard();
     renderHistory();
     renderChart();
+    renderScoutingLogs();
 }
 
 function totalOf(arr) {
@@ -349,6 +351,7 @@ function switchTab(id) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === id));
     if (id === 'history') renderHistory();
     if (id === 'dashboard') renderChart();
+    if (id === 'scouting') renderScoutingLogs();
 }
 
 // ── Init ───────────────────────────────────────────
@@ -375,6 +378,165 @@ function updateLocationFilterOptions() {
     }
 }
 
+// ── Scouting Logic ─────────────────────────────────
+let audioRecorder = null;
+let audioChunks = [];
+let audioBlob = null;
+
+async function setupScouting() {
+    document.getElementById('scout-date').value = today();
+
+    const photoInput = document.getElementById('scout-photo');
+    const photoPreview = document.getElementById('scout-photo-preview');
+
+    photoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                photoPreview.src = ev.target.result;
+                photoPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            photoPreview.style.display = 'none';
+        }
+    });
+
+    const recordBtn = document.getElementById('recordBtn');
+    const audioPreview = document.getElementById('scout-audio-preview');
+
+    recordBtn.addEventListener('click', async () => {
+        if (!audioRecorder || audioRecorder.state === 'inactive') {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                audioRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+
+                audioRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    audioPreview.src = URL.createObjectURL(audioBlob);
+                    audioPreview.style.display = 'block';
+                    stream.getTracks().forEach(t => t.stop());
+                };
+
+                audioRecorder.start();
+                recordBtn.classList.add('recording');
+                recordBtn.textContent = '⏹ Stop Recording';
+            } catch (err) {
+                showToast('Mic access denied or error', 'error');
+            }
+        } else if (audioRecorder.state === 'recording') {
+            audioRecorder.stop();
+            recordBtn.classList.remove('recording');
+            recordBtn.textContent = '🎤 Start Recording';
+        }
+    });
+
+    document.getElementById('scout-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const rec = {
+            id: uuid(),
+            date: document.getElementById('scout-date').value,
+            location: document.getElementById('scout-location').value.trim(),
+            observation: document.getElementById('scout-observation').value.trim(),
+        };
+
+        if (!rec.date || !rec.location || !rec.observation) {
+            showToast('Fill all required fields', 'error'); return;
+        }
+
+        // Base64 encode photo if it exists
+        const file = photoInput.files[0];
+        if (file) {
+            rec.photoBase64 = photoPreview.src;
+            rec.photoMimeType = file.type;
+        }
+
+        // Base64 encode audio if it exists
+        if (audioBlob) {
+            rec.audioBase64 = await new Promise((req) => {
+                const reader = new FileReader();
+                reader.onload = () => req(reader.result);
+                reader.readAsDataURL(audioBlob);
+            });
+            rec.audioMimeType = 'audio/webm';
+        }
+
+        setLoading(true);
+        showToast('Saving log (may take time for media)...', 'info');
+        try {
+            const res = await gasPost({ action: 'add_scouting', ...rec });
+            if (res.success) {
+                rec.photoUrl = res.photoUrl || '';
+                rec.audioUrl = res.audioUrl || '';
+                state.data.scouting.unshift(rec);
+                showToast('Log recorded ✓', 'success');
+                e.target.reset();
+                document.getElementById('scout-date').value = today();
+                window.clearScoutMedia();
+                renderScoutingLogs();
+            } else {
+                showToast('Error: ' + res.error, 'error');
+            }
+        } catch (err) {
+            showToast('Save failed: ' + err.message, 'error');
+        }
+        setLoading(false);
+    });
+}
+
+window.clearScoutMedia = function () {
+    document.getElementById('scout-photo-preview').style.display = 'none';
+    document.getElementById('scout-photo-preview').src = '';
+    document.getElementById('scout-audio-preview').style.display = 'none';
+    document.getElementById('scout-audio-preview').src = '';
+    audioBlob = null;
+    audioChunks = [];
+};
+
+function renderScoutingLogs() {
+    const container = document.getElementById('scout-logs-container');
+    if (!container) return;
+
+    let logs = state.data.scouting;
+    const locFilter = document.getElementById('globalLocationFilter')?.value || 'all';
+    if (locFilter !== 'all') {
+        logs = logs.filter(r => r.location === locFilter);
+    }
+
+    logs.sort((a, b) => b.date.localeCompare(a.date));
+
+    if (logs.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <p>No scouting logs found.</p>
+          </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = logs.map(log => `
+        <div class="scout-card">
+            <div class="scout-header">
+                <div><strong>📅 ${log.date}</strong> &bull; 📍 ${log.location}</div>
+                <button class="delete-btn" onclick="deleteRecord('scouting', '${log.id}')" title="Delete">🗑</button>
+            </div>
+            <div class="scout-body">${log.observation}</div>
+            <div class="scout-media">
+                ${log.photoUrl ? `<a href="${log.photoUrl}" target="_blank"><img src="${log.photoUrl}" class="scout-img" /></a>` : ''}
+                ${log.audioUrl ? `<audio src="${log.audioUrl}" controls class="scout-audio"></audio>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('inv-date').value = today();
     document.getElementById('ci-date').value = today();
@@ -390,6 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('histFilter').addEventListener('change', renderHistory);
     document.getElementById('refreshBtn').addEventListener('click', loadData);
 
+    setupScouting();
 
     // ── Lock Screen Logic ──────────────────────────────
     let currentPin = '';
