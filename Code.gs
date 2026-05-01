@@ -12,6 +12,15 @@ const HEADERS_CASH    = ['ID', 'Date', 'Location', 'Category', 'Amount', 'Notes'
 const HEADERS_SCOUT   = ['ID', 'Date', 'Location', 'Observations', 'PhotoUrl', 'AudioUrl', 'Deleted'];
 
 // ── Helpers ───────────────────────────────────────
+function authorize() {
+  // Run this function manually in the Apps Script editor to grant Drive permissions
+  DriveApp.getRootFolder();
+  // Force full drive access by creating and deleting a dummy folder
+  var dummy = DriveApp.createFolder("dummy_auth_folder");
+  dummy.setTrashed(true); 
+  SpreadsheetApp.getActiveSpreadsheet();
+}
+
 function getWorkingSpreadsheet() {
   let ss = SpreadsheetApp.getActiveSpreadsheet();
   if (ss) return ss;
