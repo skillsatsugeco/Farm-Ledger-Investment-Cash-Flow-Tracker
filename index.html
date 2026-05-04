@@ -4,8 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>freshBABA FARMS — Investment & Cash Flow Tracker</title>
-  <meta name="description" content="Track your farm investments and cash inflows. Data synced to Google Sheets." />
+  <title>freshBABA FARMS — Investment &amp; Cash Flow Tracker</title>
+  <meta name="description"
+    content="Track your farm investments, cash inflows and assets. Data synced to Google Sheets." />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
@@ -46,14 +47,16 @@
 
       <div id="pinError" style="color:var(--accent-red); font-size:13px; margin-top:20px; min-height:20px;"></div>
     </div>
-  </div> <!-- ══════════ HEADER ══════════ -->
+  </div>
+
+  <!-- ══════════ HEADER ══════════ -->
   <header class="header">
     <div class="header-brand">
       <div class="header-logo" style="background:none;"><img src="logo.jpg" alt="Logo"
           style="width:100%; height:100%; object-fit:contain; border-radius:10px;"></div>
       <div>
         <div class="header-title">freshBABA FARMS</div>
-        <div class="header-sub">Investment & Cash Flow Tracker</div>
+        <div class="header-sub">Investment &amp; Cash Flow Tracker</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:14px;">
@@ -77,8 +80,9 @@
   <!-- ══════════ NAV TABS ══════════ -->
   <div class="nav-tabs">
     <button class="nav-tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
-    <button class="nav-tab" data-tab="investments" onclick="switchTab('investments')">📉 Add Investment</button>
-    <button class="nav-tab" data-tab="cashinflows" onclick="switchTab('cashinflows')">💵 Add Cash Inflow</button>
+    <button class="nav-tab" data-tab="investments" onclick="switchTab('investments')">📉 Expenses</button>
+    <button class="nav-tab" data-tab="cashinflows" onclick="switchTab('cashinflows')">💵 Income</button>
+    <button class="nav-tab" data-tab="assets" onclick="switchTab('assets')">🏦 Assets</button>
     <button class="nav-tab" data-tab="scouting" onclick="switchTab('scouting')">📝 Field Scouting</button>
     <button class="nav-tab" data-tab="history" onclick="switchTab('history')">📋 History</button>
   </div>
@@ -96,15 +100,21 @@
         </div>
         <div class="stat-card cashout">
           <div class="stat-icon">💵</div>
-          <div class="stat-label">Total Cash Inflows</div>
+          <div class="stat-label">Total Income</div>
           <div class="stat-value green" id="stat-cashout">TZS 0</div>
           <div class="stat-sub" id="stat-co-count">0 records</div>
+        </div>
+        <div class="stat-card assets-card">
+          <div class="stat-icon">🏦</div>
+          <div class="stat-label">Total Assets</div>
+          <div class="stat-value purple" id="stat-assets">TZS 0</div>
+          <div class="stat-sub" id="stat-assets-count">0 assets</div>
         </div>
         <div class="stat-card net">
           <div class="stat-icon">💰</div>
           <div class="stat-label">Net Profit / Loss</div>
           <div class="stat-value gold" id="stat-net">TZS 0</div>
-          <div class="stat-sub">Inflows minus Investment</div>
+          <div class="stat-sub">Income minus Expenses</div>
         </div>
         <div class="stat-card roi">
           <div class="stat-icon">📐</div>
@@ -115,7 +125,7 @@
       </div>
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title">📊 Monthly Overview — Investments vs Cash Inflows</div>
+          <div class="panel-title">📊 Monthly Overview — Expenses vs Income</div>
           <span class="save-indicator" id="saveIndicator">✓ Saved to Google Sheets</span>
         </div>
         <div class="panel-body">
@@ -126,9 +136,10 @@
       </div>
     </div>
 
-    <!-- ══════════ ADD INVESTMENT ══════════ -->
+    <!-- ══════════ ADD INVESTMENT / EXPENSE ══════════ -->
     <div id="investments" class="tab-content">
       <div class="add-panel">
+        <div class="section-heading">📉 Record Expense / Investment</div>
         <form id="inv-form">
           <div class="form-grid">
             <div class="form-group">
@@ -144,6 +155,14 @@
               <input type="number" id="inv-amount" min="1" step="any" placeholder="e.g. 50000" required />
             </div>
             <div class="form-group">
+              <label for="inv-payment-type">Payment Type *</label>
+              <select id="inv-payment-type" required>
+                <option value="" disabled selected>— Cash or Credit? —</option>
+                <option value="Cash">💵 Cash</option>
+                <option value="Credit">💳 Credit / On Account</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label for="inv-category">Category *</label>
               <select id="inv-category" required>
                 <option value="" disabled selected>— Select category —</option>
@@ -155,7 +174,7 @@
                   <option>Herbicides / Weedicides</option>
                   <option>Fungicides</option>
                 </optgroup>
-                <optgroup label="💧 Water & Land">
+                <optgroup label="💧 Water &amp; Land">
                   <option>Irrigation</option>
                   <option>Land Rent / Lease</option>
                   <option>Land Preparation</option>
@@ -168,33 +187,33 @@
                   <option>General Farm Labor</option>
                   <option>Supervisory Wages</option>
                 </optgroup>
-                <optgroup label="🚜 Equipment & Tools">
+                <optgroup label="🚜 Equipment &amp; Tools">
                   <option>Equipment Purchase</option>
                   <option>Equipment Rental (Tractor)</option>
                   <option>Equipment Rental (Other)</option>
-                  <option>Tools & Small Equipment</option>
-                  <option>Equipment Repair & Maintenance</option>
-                  <option>Fuel & Lubricants</option>
+                  <option>Tools &amp; Small Equipment</option>
+                  <option>Equipment Repair &amp; Maintenance</option>
+                  <option>Fuel &amp; Lubricants</option>
                 </optgroup>
                 <optgroup label="🐄 Livestock">
                   <option>Animal Purchase</option>
                   <option>Animal Feed</option>
                   <option>Veterinary Services</option>
-                  <option>Vaccines & Medicine</option>
+                  <option>Vaccines &amp; Medicine</option>
                   <option>Livestock Housing</option>
                 </optgroup>
                 <optgroup label="🚚 Logistics">
                   <option>Transport (Inputs)</option>
                   <option>Transport (Produce)</option>
-                  <option>Packaging & Storage</option>
+                  <option>Packaging &amp; Storage</option>
                   <option>Cold Storage / Warehouse</option>
                 </optgroup>
-                <optgroup label="💼 Finance & Admin">
+                <optgroup label="💼 Finance &amp; Admin">
                   <option>Loan Interest / Repayment</option>
                   <option>Insurance Premium</option>
-                  <option>Permit & License Fees</option>
+                  <option>Permit &amp; License Fees</option>
                   <option>Extension / Consultancy Services</option>
-                  <option>Training & Capacity Building</option>
+                  <option>Training &amp; Capacity Building</option>
                 </optgroup>
                 <optgroup label="🏗 Infrastructure">
                   <option>Fence Construction</option>
@@ -211,7 +230,7 @@
           </div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary" style="background:linear-gradient(135deg,#ff5252,#c62828);">✚
-              Record Investment</button>
+              Record Expense</button>
             <button type="reset" class="btn btn-secondary"
               onclick="document.getElementById('inv-date').value=today()">Clear</button>
           </div>
@@ -219,9 +238,10 @@
       </div>
     </div>
 
-    <!-- ══════════ ADD CASH INFLOW ══════════ -->
+    <!-- ══════════ ADD CASH INFLOW / INCOME ══════════ -->
     <div id="cashinflows" class="tab-content">
       <div class="add-panel">
+        <div class="section-heading">💵 Record Income</div>
         <form id="ci-form">
           <div class="form-grid">
             <div class="form-group">
@@ -235,6 +255,14 @@
             <div class="form-group">
               <label for="ci-amount">Amount (TZS) *</label>
               <input type="number" id="ci-amount" min="1" step="any" placeholder="e.g. 200000" required />
+            </div>
+            <div class="form-group">
+              <label for="ci-sale-type">Sale Type *</label>
+              <select id="ci-sale-type" required>
+                <option value="" disabled selected>— Sale type? —</option>
+                <option value="Cash Sale">💵 Cash Sale</option>
+                <option value="Credit Sale">💳 Credit Sale</option>
+              </select>
             </div>
             <div class="form-group">
               <label for="ci-category">Category *</label>
@@ -269,13 +297,13 @@
                   <option>Milk / Dairy Sale</option>
                   <option>Fish / Aquaculture Sale</option>
                 </optgroup>
-                <optgroup label="🔧 Asset & Service Income">
+                <optgroup label="🔧 Asset &amp; Service Income">
                   <option>Equipment Rental Income</option>
                   <option>Land Rental Income</option>
                   <option>By-Product Sale (Straw, Husks…)</option>
                   <option>Processed Product Sale</option>
                 </optgroup>
-                <optgroup label="💵 Grants & Finance">
+                <optgroup label="💵 Grants &amp; Finance">
                   <option>Government Subsidy</option>
                   <option>NGO / Development Grant</option>
                   <option>Loan Received</option>
@@ -291,11 +319,136 @@
             </div>
           </div>
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">✚ Record Cash Inflow</button>
+            <button type="submit" class="btn btn-primary">✚ Record Income</button>
             <button type="reset" class="btn btn-secondary"
               onclick="document.getElementById('ci-date').value=today()">Clear</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- ══════════ ASSETS ══════════ -->
+    <div id="assets" class="tab-content">
+      <div class="add-panel">
+        <div class="section-heading">🏦 Record Farm Asset</div>
+        <form id="asset-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="asset-date">Date Acquired *</label>
+              <input type="date" id="asset-date" required />
+            </div>
+            <div class="form-group">
+              <label for="asset-location">Site / Location *</label>
+              <input type="text" id="asset-location" placeholder="e.g. Site A, Main Farm..." required />
+            </div>
+            <div class="form-group">
+              <label for="asset-name">Asset Name *</label>
+              <input type="text" id="asset-name" placeholder="e.g. Tractor, Water Pump, Shed..." required />
+            </div>
+            <div class="form-group">
+              <label for="asset-value">Purchase Value (TZS) *</label>
+              <input type="number" id="asset-value" min="1" step="any" placeholder="e.g. 5000000" required />
+            </div>
+            <div class="form-group">
+              <label for="asset-category">Category *</label>
+              <select id="asset-category" required>
+                <option value="" disabled selected>— Select category —</option>
+                <optgroup label="🚜 Machinery &amp; Equipment">
+                  <option>Tractor</option>
+                  <option>Plough / Harrow</option>
+                  <option>Water Pump</option>
+                  <option>Generator</option>
+                  <option>Sprayer</option>
+                  <option>Harvesting Machine</option>
+                  <option>Other Machinery</option>
+                </optgroup>
+                <optgroup label="🏗 Buildings &amp; Structures">
+                  <option>Farm House / Office</option>
+                  <option>Storage Shed / Warehouse</option>
+                  <option>Animal Housing</option>
+                  <option>Greenhouse / Shade Net</option>
+                  <option>Water Tank / Reservoir</option>
+                  <option>Fence / Boundary Wall</option>
+                </optgroup>
+                <optgroup label="🌱 Land">
+                  <option>Owned Land</option>
+                  <option>Leased Land (Long-term)</option>
+                </optgroup>
+                <optgroup label="🐄 Livestock">
+                  <option>Cattle / Cows</option>
+                  <option>Goats / Sheep</option>
+                  <option>Pigs</option>
+                  <option>Poultry Flock</option>
+                  <option>Fish Pond</option>
+                </optgroup>
+                <optgroup label="🔧 Tools &amp; Small Assets">
+                  <option>Hand Tools (Hoes, Machetes…)</option>
+                  <option>Irrigation Pipes / Drip System</option>
+                  <option>Weighing Scale</option>
+                  <option>Storage Containers</option>
+                </optgroup>
+                <optgroup label="🚗 Vehicles">
+                  <option>Farm Truck / Pickup</option>
+                  <option>Motorbike</option>
+                  <option>Other Vehicle</option>
+                </optgroup>
+                <option>Other Asset</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="asset-condition">Condition</label>
+              <select id="asset-condition">
+                <option value="New">🟢 New</option>
+                <option value="Good">🔵 Good</option>
+                <option value="Fair" selected>🟡 Fair</option>
+                <option value="Poor">🔴 Poor / Needs Repair</option>
+              </select>
+            </div>
+            <div class="form-group form-full">
+              <label for="asset-notes">Notes / Description</label>
+              <textarea id="asset-notes" placeholder="Optional — serial number, supplier, warranty info…"></textarea>
+            </div>
+            <!-- Photo upload -->
+            <div class="form-group form-full">
+              <label>Asset Photo <span style="color:var(--text-muted); font-weight:400;">(optional — adds
+                  realism)</span></label>
+              <div class="photo-upload-area" id="assetPhotoArea">
+                <input type="file" id="asset-photo" accept="image/*" capture="environment" style="display:none;" />
+                <div class="photo-upload-placeholder" id="assetPhotoPlaceholder"
+                  onclick="document.getElementById('asset-photo').click()">
+                  <div style="font-size:36px; margin-bottom:8px;">📷</div>
+                  <div style="font-weight:600; font-size:14px; color:var(--text-primary);">Click to take / upload photo
+                  </div>
+                  <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Supports JPG, PNG, WEBP</div>
+                </div>
+                <div class="asset-photo-preview-wrap" id="assetPhotoPreviewWrap" style="display:none;">
+                  <img id="asset-photo-preview"
+                    style="max-width:100%; max-height:220px; border-radius:10px; object-fit:contain;" />
+                  <button type="button" class="remove-photo-btn" onclick="clearAssetPhoto()">✕ Remove Photo</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" style="background:linear-gradient(135deg,#7c3aed,#4c1d95);">🏦
+              Record Asset</button>
+            <button type="reset" class="btn btn-secondary"
+              onclick="document.getElementById('asset-date').value=today(); clearAssetPhoto();">Clear</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Asset list -->
+      <div class="panel" style="margin-top:24px;">
+        <div class="panel-header">
+          <div class="panel-title">🏦 Recorded Assets</div>
+        </div>
+        <div class="panel-body" id="assets-list-container">
+          <div class="empty-state">
+            <div class="empty-icon">🏦</div>
+            <p>No assets recorded yet.</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -358,8 +511,9 @@
           <input class="search-box" id="histSearch" type="text" placeholder="🔍  Search by category, notes, date…" />
           <select class="filter-select" id="histFilter">
             <option value="all">All Records</option>
-            <option value="investments">Investments Only</option>
-            <option value="cashinflows">Cash Inflows Only</option>
+            <option value="investments">Expenses Only</option>
+            <option value="cashinflows">Income Only</option>
+            <option value="assets">Assets Only</option>
           </select>
         </div>
         <div class="table-wrap" style="padding:16px 24px;">
@@ -369,6 +523,7 @@
                 <th>Date</th>
                 <th>Location</th>
                 <th>Type</th>
+                <th>Payment</th>
                 <th>Category</th>
                 <th>Amount (TZS)</th>
                 <th>Notes</th>
@@ -377,7 +532,7 @@
             </thead>
             <tbody id="histBody">
               <tr>
-                <td colspan="7">
+                <td colspan="8">
                   <div class="empty-state">
                     <div class="empty-icon">📋</div>
                     <p>Connect your Google Sheet to load records.</p>
