@@ -6,7 +6,7 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyZXruOGI9pcIg-sbzv-LJxuYfMZj3PIqbDsrsMcCbifxL-7RZbfak7dPCfkYh2gn8HBw/exec';
 
 let state = {
-    data: { investments: [], cashInflows: [], scouting: [] },
+    data: { investments: [], cashInflows: [], scouting: [], assets: [] },
     chart: null,
     loading: false,
 };
@@ -79,6 +79,7 @@ async function loadData() {
             state.data.investments = json.investments || [];
             state.data.cashInflows = json.cashInflows || [];
             state.data.scouting = json.scouting || [];
+            state.data.assets = json.assets || [];
             updateLocationFilterOptions();
             renderAll();
             showToast('Data loaded ✓', 'success');
@@ -91,7 +92,7 @@ async function loadData() {
     setLoading(false);
 }
 
-// ── Add Investment ─────────────────────────────────
+// ── Add Investment / Expense ────────────────────────
 async function addInvestment(e) {
     e.preventDefault();
     const rec = {
@@ -99,10 +100,11 @@ async function addInvestment(e) {
         date: document.getElementById('inv-date').value,
         location: document.getElementById('inv-location').value.trim(),
         category: document.getElementById('inv-category').value,
+        paymentType: document.getElementById('inv-payment-type').value,
         amount: parseFloat(document.getElementById('inv-amount').value),
         notes: document.getElementById('inv-notes').value.trim(),
     };
-    if (!rec.date || !rec.location || !rec.category || isNaN(rec.amount) || rec.amount <= 0) {
+    if (!rec.date || !rec.location || !rec.category || !rec.paymentType || isNaN(rec.amount) || rec.amount <= 0) {
         showToast('Fill all required fields', 'error'); return;
     }
     setLoading(true);
@@ -111,7 +113,7 @@ async function addInvestment(e) {
         const res = await gasPost({ action: 'add_investment', ...rec });
         if (res.success) {
             state.data.investments.push(rec);
-            showToast('Investment recorded ✓', 'success');
+            showToast('Expense recorded ✓', 'success');
             e.target.reset();
             document.getElementById('inv-date').value = today();
             flashSaveIndicator();
@@ -126,7 +128,7 @@ async function addInvestment(e) {
     setLoading(false);
 }
 
-// ── Add Cash Inflow ────────────────────────────────
+// ── Add Cash Inflow / Income ───────────────────────
 async function addCashInflow(e) {
     e.preventDefault();
     const rec = {
@@ -134,10 +136,11 @@ async function addCashInflow(e) {
         date: document.getElementById('ci-date').value,
         location: document.getElementById('ci-location').value.trim(),
         category: document.getElementById('ci-category').value,
+        saleType: document.getElementById('ci-sale-type').value,
         amount: parseFloat(document.getElementById('ci-amount').value),
         notes: document.getElementById('ci-notes').value.trim(),
     };
-    if (!rec.date || !rec.location || !rec.category || isNaN(rec.amount) || rec.amount <= 0) {
+    if (!rec.date || !rec.location || !rec.category || !rec.saleType || isNaN(rec.amount) || rec.amount <= 0) {
         showToast('Fill all required fields', 'error'); return;
     }
     setLoading(true);
@@ -146,7 +149,7 @@ async function addCashInflow(e) {
         const res = await gasPost({ action: 'add_cashinflow', ...rec });
         if (res.success) {
             state.data.cashInflows.push(rec);
-            showToast('Cash inflow recorded ✓', 'success');
+            showToast('Income recorded ✓', 'success');
             e.target.reset();
             document.getElementById('ci-date').value = today();
             flashSaveIndicator();
@@ -161,6 +164,63 @@ async function addCashInflow(e) {
     setLoading(false);
 }
 
+// ── Add Asset ──────────────────────────────────────
+let assetPhotoBase64 = null;
+let assetPhotoMimeType = null;
+
+async function addAsset(e) {
+    e.preventDefault();
+    const rec = {
+        id: uuid(),
+        date: document.getElementById('asset-date').value,
+        location: document.getElementById('asset-location').value.trim(),
+        name: document.getElementById('asset-name').value.trim(),
+        category: document.getElementById('asset-category').value,
+        value: parseFloat(document.getElementById('asset-value').value),
+        condition: document.getElementById('asset-condition').value,
+        notes: document.getElementById('asset-notes').value.trim(),
+    };
+    if (!rec.date || !rec.location || !rec.name || !rec.category || isNaN(rec.value) || rec.value <= 0) {
+        showToast('Fill all required fields', 'error'); return;
+    }
+
+    if (assetPhotoBase64) {
+        rec.photoBase64 = assetPhotoBase64;
+        rec.photoMimeType = assetPhotoMimeType;
+    }
+
+    setLoading(true);
+    showToast('Saving asset…', 'info');
+    try {
+        const res = await gasPost({ action: 'add_asset', ...rec });
+        if (res.success) {
+            rec.photoUrl = res.photoUrl || '';
+            state.data.assets.push(rec);
+            showToast('Asset recorded ✓', 'success');
+            e.target.reset();
+            document.getElementById('asset-date').value = today();
+            clearAssetPhoto();
+            flashSaveIndicator();
+            renderAssets();
+            renderDashboard();
+        } else {
+            showToast('Error: ' + res.error, 'error');
+        }
+    } catch (err) {
+        showToast('Save failed: ' + err.message, 'error');
+    }
+    setLoading(false);
+}
+
+window.clearAssetPhoto = function () {
+    assetPhotoBase64 = null;
+    assetPhotoMimeType = null;
+    document.getElementById('asset-photo').value = '';
+    document.getElementById('assetPhotoPreviewWrap').style.display = 'none';
+    document.getElementById('assetPhotoPlaceholder').style.display = 'flex';
+    document.getElementById('asset-photo-preview').src = '';
+};
+
 // ── Delete ─────────────────────────────────────────
 async function deleteRecord(type, id) {
     if (!confirm('Delete this record?')) return;
@@ -170,8 +230,12 @@ async function deleteRecord(type, id) {
         if (res.success) {
             if (type === 'investment') {
                 state.data.investments = state.data.investments.filter(r => r.id !== id);
-            } else {
+            } else if (type === 'cashinflow') {
                 state.data.cashInflows = state.data.cashInflows.filter(r => r.id !== id);
+            } else if (type === 'asset') {
+                state.data.assets = state.data.assets.filter(r => r.id !== id);
+            } else {
+                state.data.scouting = state.data.scouting.filter(r => r.id !== id);
             }
             updateLocationFilterOptions();
             renderAll();
@@ -191,32 +255,37 @@ function renderAll() {
     renderHistory();
     renderChart();
     renderScoutingLogs();
+    renderAssets();
 }
 
-function totalOf(arr) {
-    return arr.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+function totalOf(arr, field = 'amount') {
+    return arr.reduce((s, r) => s + (parseFloat(r[field]) || 0), 0);
 }
 
 function getFilteredData() {
     const locFilter = document.getElementById('globalLocationFilter')?.value || 'all';
     let invs = state.data.investments;
     let cis = state.data.cashInflows;
+    let assets = state.data.assets;
     if (locFilter !== 'all') {
         invs = invs.filter(r => r.location === locFilter);
         cis = cis.filter(r => r.location === locFilter);
+        assets = assets.filter(r => r.location === locFilter);
     }
-    return { investments: invs, cashInflows: cis };
+    return { investments: invs, cashInflows: cis, assets };
 }
 
 function renderDashboard() {
-    const { investments, cashInflows } = getFilteredData();
+    const { investments, cashInflows, assets } = getFilteredData();
     const totalInv = totalOf(investments);
     const totalCi = totalOf(cashInflows);
+    const totalAssets = totalOf(assets, 'value');
     const net = totalCi - totalInv;
     const roi = totalInv > 0 ? ((net / totalInv) * 100).toFixed(1) : '—';
 
     document.getElementById('stat-invested').textContent = fmt(totalInv);
     document.getElementById('stat-cashout').textContent = fmt(totalCi);
+    document.getElementById('stat-assets').textContent = fmt(totalAssets);
     document.getElementById('stat-net').textContent = (net >= 0 ? '+' : '-') + fmt(net);
     document.getElementById('stat-roi').textContent = roi !== '—' ? roi + '%' : '—';
 
@@ -225,6 +294,7 @@ function renderDashboard() {
 
     document.getElementById('stat-inv-count').textContent = investments.length + ' records';
     document.getElementById('stat-co-count').textContent = cashInflows.length + ' records';
+    document.getElementById('stat-assets-count').textContent = assets.length + ' assets';
 }
 
 function renderHistory() {
@@ -233,43 +303,73 @@ function renderHistory() {
     const tbody = document.getElementById('histBody');
     if (!tbody) return;
 
-    const { investments, cashInflows } = getFilteredData();
+    const { investments, cashInflows, assets } = getFilteredData();
 
     let rows = [];
-    if (filter !== 'cashinflows') investments.forEach(r => rows.push({ ...r, _type: 'investment' }));
-    if (filter !== 'investments') cashInflows.forEach(r => rows.push({ ...r, _type: 'cashinflow' }));
+    if (filter !== 'cashinflows' && filter !== 'assets') {
+        investments.forEach(r => rows.push({ ...r, _type: 'investment' }));
+    }
+    if (filter !== 'investments' && filter !== 'assets') {
+        cashInflows.forEach(r => rows.push({ ...r, _type: 'cashinflow' }));
+    }
+    if (filter === 'assets' || filter === 'all') {
+        assets.forEach(r => rows.push({
+            ...r,
+            amount: r.value,
+            category: r.name + (r.category ? ' (' + r.category + ')' : ''),
+            notes: [r.condition ? 'Condition: ' + r.condition : '', r.notes || ''].filter(Boolean).join(' | '),
+            _type: 'asset'
+        }));
+    }
 
-    rows.sort((a, b) => b.date.localeCompare(a.date));
+    rows.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
     if (query) {
         rows = rows.filter(r =>
-            r.category.toLowerCase().includes(query) ||
+            (r.category || '').toLowerCase().includes(query) ||
             (r.notes || '').toLowerCase().includes(query) ||
-            r.date.includes(query)
+            (r.date || '').includes(query) ||
+            (r.name || '').toLowerCase().includes(query)
         );
     }
 
     if (rows.length === 0) {
         tbody.innerHTML = `
-      <tr><td colspan="6">
+      <tr><td colspan="8">
         <div class="empty-state">
           <div class="empty-icon">📋</div>
-          <p>No records yet. Connect your Google Sheet and start adding entries.</p>
+          <p>No records yet. Start adding entries using the tabs above.</p>
         </div>
       </td></tr>`;
         return;
     }
 
+    const paymentBadge = (r) => {
+        if (r._type === 'investment') {
+            const pt = r.paymentType || '—';
+            const cls = pt === 'Credit' ? 'badge-credit' : 'badge-cash';
+            const icon = pt === 'Credit' ? '💳' : '💵';
+            return `<span class="badge ${cls}">${icon} ${pt}</span>`;
+        }
+        if (r._type === 'cashinflow') {
+            const st = r.saleType || '—';
+            const cls = st === 'Credit Sale' ? 'badge-credit' : 'badge-cash';
+            return `<span class="badge ${cls}">${st}</span>`;
+        }
+        return '<span class="badge badge-type">Asset</span>';
+    };
+
     tbody.innerHTML = rows.map(r => `
     <tr>
-      <td>${r.date}</td>
+      <td>${r.date || '—'}</td>
       <td style="font-weight:600;">${r.location || '—'}</td>
-      <td><span class="badge ${r._type === 'investment' ? 'badge-invest' : 'badge-cashout'}">
-        ${r._type === 'investment' ? '📉 Investment' : '💵 Cash Inflow'}
+      <td><span class="badge ${r._type === 'investment' ? 'badge-invest' : r._type === 'asset' ? 'badge-asset' : 'badge-cashout'}">
+        ${r._type === 'investment' ? '📉 Expense' : r._type === 'asset' ? '🏦 Asset' : '💵 Income'}
       </span></td>
-      <td><span class="badge badge-type">${r.category}</span></td>
-      <td class="${r._type === 'investment' ? 'amount-invest' : 'amount-cashout'}">
-        ${r._type === 'investment' ? '-' : '+'}${fmt(r.amount)}
+      <td>${paymentBadge(r)}</td>
+      <td><span class="badge badge-type">${r.category || '—'}</span></td>
+      <td class="${r._type === 'investment' ? 'amount-invest' : r._type === 'asset' ? 'amount-asset' : 'amount-cashout'}">
+        ${r._type === 'investment' ? '-' : r._type === 'asset' ? '' : '+'}${fmt(r.amount || 0)}
       </td>
       <td style="color:var(--text-secondary);font-size:12px;">${r.notes || '—'}</td>
       <td>
@@ -310,14 +410,14 @@ function renderChart() {
             labels: labels.length ? labels : ['No Data'],
             datasets: [
                 {
-                    label: 'Investments',
+                    label: 'Expenses',
                     data: months.length ? months.map(m => monthMap[m].inv) : [0],
                     backgroundColor: 'rgba(255,82,82,0.5)',
                     borderColor: 'rgba(255,82,82,0.9)',
                     borderWidth: 2, borderRadius: 6,
                 },
                 {
-                    label: 'Cash Inflows',
+                    label: 'Income',
                     data: months.length ? months.map(m => monthMap[m].ci) : [0],
                     backgroundColor: 'rgba(0,230,118,0.5)',
                     borderColor: 'rgba(0,230,118,0.9)',
@@ -345,6 +445,54 @@ function renderChart() {
     });
 }
 
+// ── Assets Rendering ───────────────────────────────
+function renderAssets() {
+    const container = document.getElementById('assets-list-container');
+    if (!container) return;
+
+    let assets = state.data.assets;
+    const locFilter = document.getElementById('globalLocationFilter')?.value || 'all';
+    if (locFilter !== 'all') {
+        assets = assets.filter(r => r.location === locFilter);
+    }
+    assets = [...assets].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    if (assets.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🏦</div>
+            <p>No assets recorded yet. Add your first farm asset above.</p>
+          </div>`;
+        return;
+    }
+
+    const conditionColors = { New: '#00e676', Good: '#448aff', Fair: '#ffd740', Poor: '#ff5252' };
+
+    container.innerHTML = `<div class="assets-grid">` + assets.map(a => {
+        const condColor = conditionColors[a.condition] || '#8892a4';
+        return `
+        <div class="asset-card">
+          ${a.photoUrl ? `<div class="asset-card-photo"><a href="${a.photoUrl}" target="_blank"><img src="${a.photoUrl}" alt="${a.name}" /></a></div>` : `<div class="asset-card-photo-placeholder">📷</div>`}
+          <div class="asset-card-body">
+            <div class="asset-card-title">${a.name || '—'}</div>
+            <div class="asset-card-meta">
+              <span class="badge badge-type">${a.category || '—'}</span>
+              <span class="badge" style="background:rgba(0,0,0,0.2);color:${condColor};border:1px solid ${condColor}40;">${a.condition || '—'}</span>
+            </div>
+            <div class="asset-card-value">${fmt(parseFloat(a.value) || 0)}</div>
+            <div class="asset-card-footer">
+              <span>📍 ${a.location || '—'}</span>
+              <span>📅 ${a.date || '—'}</span>
+            </div>
+            ${a.notes ? `<div class="asset-card-notes">${a.notes}</div>` : ''}
+            <div style="margin-top:10px;">
+              <button class="delete-btn" onclick="deleteRecord('asset','${a.id}')" title="Delete">🗑 Delete</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('') + `</div>`;
+}
+
 // ── Tab Navigation ─────────────────────────────────
 function switchTab(id) {
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
@@ -352,6 +500,7 @@ function switchTab(id) {
     if (id === 'history') renderHistory();
     if (id === 'dashboard') renderChart();
     if (id === 'scouting') renderScoutingLogs();
+    if (id === 'assets') renderAssets();
 }
 
 // ── Init ───────────────────────────────────────────
@@ -359,6 +508,7 @@ function updateLocationFilterOptions() {
     const locSet = new Set();
     state.data.investments.forEach(r => { if (r.location) locSet.add(r.location); });
     state.data.cashInflows.forEach(r => { if (r.location) locSet.add(r.location); });
+    state.data.assets.forEach(r => { if (r.location) locSet.add(r.location); });
 
     const select = document.getElementById('globalLocationFilter');
     if (!select) return;
@@ -509,7 +659,7 @@ function renderScoutingLogs() {
         logs = logs.filter(r => r.location === locFilter);
     }
 
-    logs.sort((a, b) => b.date.localeCompare(a.date));
+    logs = [...logs].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
     if (logs.length === 0) {
         container.innerHTML = `
@@ -521,36 +671,67 @@ function renderScoutingLogs() {
         return;
     }
 
-    container.innerHTML = logs.map(log => `
+    container.innerHTML = logs.map(log => {
+        // Safely extract observation text — handle old/new field names
+        const obsText = log.observation || log.Observation || log.observations || '(No observation text recorded)';
+        const dateText = log.date || '—';
+        const locText = log.location || '—';
+
+        const hasPhoto = log.photoUrl && log.photoUrl.trim() !== '';
+        const hasAudio = log.audioUrl && log.audioUrl.trim() !== '';
+
+        return `
         <div class="scout-card">
             <div class="scout-header">
-                <div><strong>📅 ${log.date}</strong> &bull; 📍 ${log.location}</div>
+                <div><strong>📅 ${dateText}</strong> &bull; 📍 ${locText}</div>
                 <button class="delete-btn" onclick="deleteRecord('scouting', '${log.id}')" title="Delete">🗑</button>
             </div>
-            <div class="scout-body">${log.observation}</div>
+            <div class="scout-body">${obsText}</div>
+            <div class="scout-media-indicators">
+              ${hasPhoto ? `<span class="media-badge photo-badge">📷 Photo attached</span>` : ''}
+              ${hasAudio ? `<span class="media-badge audio-badge">🎤 Voice note attached</span>` : ''}
+            </div>
             <div class="scout-media">
-                ${log.photoUrl ? `<a href="${log.photoUrl}" target="_blank"><img src="${log.photoUrl}" class="scout-img" /></a>` : ''}
-                ${log.audioUrl ? `<audio src="${log.audioUrl}" controls class="scout-audio"></audio>` : ''}
+                ${hasPhoto ? `<a href="${log.photoUrl}" target="_blank"><img src="${log.photoUrl}" class="scout-img" /></a>` : ''}
+                ${hasAudio ? `<audio src="${log.audioUrl}" controls class="scout-audio"></audio>` : ''}
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('inv-date').value = today();
     document.getElementById('ci-date').value = today();
+    document.getElementById('asset-date').value = today();
 
-    // Load data deferred after unlock if needed, but keeping it here for now
-    // Or we could wait for unlock. Let's just load it.
     loadData();
 
     document.getElementById('globalLocationFilter').addEventListener('change', renderAll);
     document.getElementById('inv-form').addEventListener('submit', addInvestment);
     document.getElementById('ci-form').addEventListener('submit', addCashInflow);
+    document.getElementById('asset-form').addEventListener('submit', addAsset);
     document.getElementById('histSearch').addEventListener('input', renderHistory);
     document.getElementById('histFilter').addEventListener('change', renderHistory);
     document.getElementById('refreshBtn').addEventListener('click', loadData);
+
+    // Asset photo preview
+    const assetPhotoInput = document.getElementById('asset-photo');
+    assetPhotoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                assetPhotoBase64 = ev.target.result;
+                assetPhotoMimeType = file.type;
+                document.getElementById('asset-photo-preview').src = ev.target.result;
+                document.getElementById('assetPhotoPreviewWrap').style.display = 'flex';
+                document.getElementById('assetPhotoPlaceholder').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
     setupScouting();
 
@@ -590,14 +771,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentPin.length !== 4) return;
 
         if (currentPin === correctPin) {
-            // success
             document.getElementById('lockScreen').classList.add('hidden');
             showToast('Access Granted ✓', 'success');
-
-            // Load data only after unlock to save unnecessary background requests
-            // loadData(); // If we prefer, we could defer loadData until here.
         } else {
-            // fail
             const dots = document.querySelectorAll('#pinDisplay .pin-dot');
             dots.forEach(dot => dot.classList.add('error'));
             const errEl = document.getElementById('pinError');
