@@ -332,6 +332,10 @@ body {
   background: linear-gradient(90deg, var(--accent-red), transparent);
 }
 
+.stat-card.assets-card::before {
+  background: linear-gradient(90deg, #7c3aed, transparent);
+}
+
 .stat-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
@@ -371,6 +375,10 @@ body {
 
 .stat-value.red {
   color: var(--accent-red);
+}
+
+.stat-value.purple {
+  color: #a78bfa;
 }
 
 .stat-sub {
@@ -637,6 +645,24 @@ tbody td {
   border: 1px solid rgba(0, 230, 118, 0.3);
 }
 
+.badge-asset {
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.badge-cash {
+  background: rgba(0, 230, 118, 0.1);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 230, 118, 0.25);
+}
+
+.badge-credit {
+  background: rgba(255, 215, 64, 0.12);
+  color: var(--accent-gold);
+  border: 1px solid rgba(255, 215, 64, 0.3);
+}
+
 .badge-type {
   background: rgba(255, 255, 255, 0.07);
   color: var(--text-secondary);
@@ -650,6 +676,11 @@ tbody td {
 
 .amount-cashout {
   color: var(--accent-green);
+  font-weight: 700;
+}
+
+.amount-asset {
+  color: #a78bfa;
   font-weight: 700;
 }
 
@@ -984,6 +1015,188 @@ tbody td {
   }
 }
 
+/* ── Section Heading ── */
+.section-heading {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+/* ── Photo Upload Area ── */
+.photo-upload-area {
+  border: 2px dashed var(--glass-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.photo-upload-area:hover {
+  border-color: rgba(124, 58, 237, 0.5);
+}
+
+.photo-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.photo-upload-placeholder:hover {
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.asset-photo-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.remove-photo-btn {
+  background: var(--accent-red-dim);
+  border: 1px solid var(--accent-red);
+  color: var(--accent-red);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-photo-btn:hover {
+  background: rgba(255, 82, 82, 0.25);
+}
+
+/* ── Assets Grid ── */
+.assets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.asset-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: all 0.25s;
+  border-top: 2px solid #7c3aed;
+}
+
+.asset-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.asset-card-photo {
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.asset-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.asset-card-photo:hover img {
+  transform: scale(1.05);
+}
+
+.asset-card-photo-placeholder {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  background: rgba(124, 58, 237, 0.05);
+  color: rgba(124, 58, 237, 0.4);
+}
+
+.asset-card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.asset-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.asset-card-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.asset-card-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #a78bfa;
+}
+
+.asset-card-footer {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.asset-card-notes {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  padding: 6px 10px;
+  border-left: 2px solid rgba(124, 58, 237, 0.4);
+}
+
+/* ── Scout Media Indicators ── */
+.scout-media-indicators {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.media-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.photo-badge {
+  background: rgba(68, 138, 255, 0.12);
+  color: var(--accent-blue);
+  border: 1px solid rgba(68, 138, 255, 0.3);
+}
+
+.audio-badge {
+  background: rgba(255, 82, 82, 0.1);
+  color: var(--accent-red);
+  border: 1px solid rgba(255, 82, 82, 0.3);
+}
+
 /* ── Privacy Mode ── */
 body.privacy-enabled .stat-value,
 body.privacy-enabled .amount-invest,
@@ -994,7 +1207,8 @@ body.privacy-enabled .amount-cashout {
   transition: all 0.3s ease;
 }
 
-body.privacy-enabled #mainChart {
+body.privacy-enabled #mainChart,
+body.privacy-enabled .asset-card-value {
   filter: blur(10px);
   opacity: 0.8;
   transition: all 0.3s ease;
@@ -1003,6 +1217,8 @@ body.privacy-enabled #mainChart {
 .stat-value,
 .amount-invest,
 .amount-cashout,
+.amount-asset,
+.asset-card-value,
 #mainChart {
   transition: all 0.3s ease;
 }
