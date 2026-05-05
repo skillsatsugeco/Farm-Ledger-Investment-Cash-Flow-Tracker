@@ -84,6 +84,7 @@
     <button class="nav-tab" data-tab="cashinflows" onclick="switchTab('cashinflows')">💵 Income</button>
     <button class="nav-tab" data-tab="assets" onclick="switchTab('assets')">🏦 Assets</button>
     <button class="nav-tab" data-tab="scouting" onclick="switchTab('scouting')">📝 Field Scouting</button>
+    <button class="nav-tab" data-tab="todos" onclick="switchTab('todos')">✅ Farm To-Do</button>
     <button class="nav-tab" data-tab="history" onclick="switchTab('history')">📋 History</button>
   </div>
 
@@ -499,6 +500,83 @@
           <div class="empty-state">
             <div class="empty-icon">📝</div>
             <p>No scouting logs yet.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ FARM TO-DO ══════════ -->
+    <div id="todos" class="tab-content">
+      <div class="add-panel">
+        <div class="section-heading">✅ Farm To-Do List</div>
+        <form id="todo-form">
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label for="todo-task">Task / Activity *</label>
+              <input type="text" id="todo-task" placeholder="e.g. Apply top dressing fertilizer on Block A" required />
+            </div>
+            <div class="form-group form-full">
+              <label for="todo-goal">Objective / Goal</label>
+              <textarea id="todo-goal" placeholder="Why is this important? What outcome are you targeting?"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="todo-urgency">Urgency Level *</label>
+              <select id="todo-urgency" required>
+                <option value="" disabled selected>— Select urgency —</option>
+                <option value="High">🔴 High — Do it today</option>
+                <option value="Medium">🟡 Medium — This week</option>
+                <option value="Low">🟢 Low — When possible</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="todo-location">Site / Location</label>
+              <input type="text" id="todo-location" placeholder="e.g. Block B, Site A..." />
+            </div>
+            <div class="form-group">
+              <label for="todo-due">Due Date *</label>
+              <input type="date" id="todo-due" required />
+            </div>
+            <div class="form-group">
+              <label for="todo-postpone">Postpone To (optional)</label>
+              <input type="date" id="todo-postpone" />
+            </div>
+            <div class="form-group form-full">
+              <label for="todo-notes">Notes</label>
+              <textarea id="todo-notes"
+                placeholder="Any extra details, resources needed, assigned person..."></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary"
+              style="background:linear-gradient(135deg,#7c4dff,#512da8);color:#fff;">✚ Add Task</button>
+            <button type="reset" class="btn btn-secondary">Clear</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="table-controls" style="margin-top:20px;">
+        <select class="filter-select" id="todo-filter-urgency">
+          <option value="all">All Urgency</option>
+          <option value="High">🔴 High</option>
+          <option value="Medium">🟡 Medium</option>
+          <option value="Low">🟢 Low</option>
+        </select>
+        <select class="filter-select" id="todo-filter-status">
+          <option value="all">All Status</option>
+          <option value="Pending">⏳ Pending</option>
+          <option value="Postponed">📅 Postponed</option>
+          <option value="Done">✅ Done</option>
+        </select>
+        <input class="search-box" type="text" id="todo-search" placeholder="🔍 Search tasks..." />
+      </div>
+
+      <!-- Task list -->
+      <div class="panel" style="margin-top:12px;">
+        <div class="panel-body" id="todo-list-container">
+          <div class="empty-state">
+            <div class="empty-icon">✅</div>
+            <p>No tasks yet. Add your first farm task above.</p>
           </div>
         </div>
       </div>
