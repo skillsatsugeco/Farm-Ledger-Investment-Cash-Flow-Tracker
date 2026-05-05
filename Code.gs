@@ -7,11 +7,13 @@ const SHEET_NAME_INV   = 'Investments';
 const SHEET_NAME_CASH  = 'CashInflows';
 const SHEET_NAME_SCOUT = 'FieldScouting';
 const SHEET_NAME_ASSET = 'Assets';
+const SHEET_NAME_TODO  = 'FarmToDo';
 
 const HEADERS_INV   = ['ID', 'Date', 'Location', 'Category', 'PaymentType', 'Amount', 'Notes', 'Deleted'];
 const HEADERS_CASH  = ['ID', 'Date', 'Location', 'Category', 'SaleType', 'Amount', 'Notes', 'Deleted'];
 const HEADERS_SCOUT = ['ID', 'Date', 'Location', 'Observation', 'PhotoUrl', 'AudioUrl', 'Deleted'];
 const HEADERS_ASSET = ['ID', 'Date', 'Location', 'Name', 'Category', 'Value', 'Condition', 'Notes', 'PhotoUrl', 'Deleted'];
+const HEADERS_TODO  = ['ID', 'Task', 'Goal', 'Urgency', 'Location', 'DueDate', 'PostponeTo', 'Status', 'Notes', 'CreatedDate', 'Deleted'];
 
 // ── Helpers ───────────────────────────────────────
 function authorize() {
@@ -39,6 +41,7 @@ function getWorkingSpreadsheet() {
 function getOrCreateSheet(name, headers) {
   const ss = getWorkingSpreadsheet();
   let sheet = ss.getSheetByName(name);
+  
   if (!sheet) {
     sheet = ss.insertSheet(name);
     sheet.appendRow(headers);
@@ -47,6 +50,28 @@ function getOrCreateSheet(name, headers) {
       .setBackground('#2d4a2d')
       .setFontColor('#ffffff');
     sheet.setFrozenRows(1);
+  } else {
+    // ── Auto-Migration for Legacy Headers ──
+    const existingHeaderValues = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0];
+    const existingHeaderLabels = existingHeaderValues.map(h => String(h).trim().toLowerCase());
+    
+    // Check if the 5th column (index 4) is 'amount' (the old layout). If so, we need to insert the Payment/Sale type column.
+    if (name === SHEET_NAME_INV && existingHeaderLabels[4] === 'amount') {
+      sheet.insertColumnAfter(4); // Inserts empty Column E
+      sheet.getRange(1, 5).setValue('PaymentType'); // Set new header in E
+      sheet.getRange(1, 1, 1, headers.length)
+        .setFontWeight('bold')
+        .setBackground('#2d4a2d')
+        .setFontColor('#ffffff');
+    }
+    else if (name === SHEET_NAME_CASH && existingHeaderLabels[4] === 'amount') {
+      sheet.insertColumnAfter(4); // Inserts empty Column E
+      sheet.getRange(1, 5).setValue('SaleType'); // Set new header in E
+      sheet.getRange(1, 1, 1, headers.length)
+        .setFontWeight('bold')
+        .setBackground('#2d4a2d')
+        .setFontColor('#ffffff');
+    }
   }
   return sheet;
 }
@@ -151,6 +176,26 @@ function mapAssetRows(sheet) {
     }));
 }
 
+function mapTodoRows(sheet) {
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) return [];
+  // Columns: ID, Task, Goal, Urgency, Location, DueDate, PostponeTo, Status, Notes, CreatedDate, Deleted
+  return rows.slice(1)
+    .filter(r => r[10] !== true && r[10] !== 'TRUE')
+    .map(r => ({
+      id:          String(r[0] || ''),
+      task:        String(r[1] || ''),
+      goal:        String(r[2] || ''),
+      urgency:     String(r[3] || 'Medium'),
+      location:    String(r[4] || ''),
+      dueDate:     r[5] instanceof Date ? Utilities.formatDate(r[5], Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(r[5] || ''),
+      postponeTo:  r[6] instanceof Date ? Utilities.formatDate(r[6], Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(r[6] || ''),
+      status:      String(r[7] || 'Pending'),
+      notes:       String(r[8] || ''),
+      createdDate: r[9] instanceof Date ? Utilities.formatDate(r[9], Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(r[9] || ''),
+    }));
+}
+
 // ── GET — load all records ─────────────────────────
 function doGet() {
   try {
@@ -158,6 +203,7 @@ function doGet() {
     const cashSheet  = getOrCreateSheet(SHEET_NAME_CASH,  HEADERS_CASH);
     const scoutSheet = getOrCreateSheet(SHEET_NAME_SCOUT, HEADERS_SCOUT);
     const assetSheet = getOrCreateSheet(SHEET_NAME_ASSET, HEADERS_ASSET);
+    const todoSheet  = getOrCreateSheet(SHEET_NAME_TODO,  HEADERS_TODO);
 
     return corsResponse({
       success:     true,
@@ -165,6 +211,7 @@ function doGet() {
       cashInflows: mapCashInflowRows(cashSheet),
       scouting:    mapScoutingRows(scoutSheet),
       assets:      mapAssetRows(assetSheet),
+      todos:       mapTodoRows(todoSheet),
     });
   } catch (e) {
     return corsResponse({ success: false, error: e.message });
@@ -258,6 +305,32 @@ function doPost(e) {
       return corsResponse({ success: true, photoUrl: photoUrl });
     }
 
+    // ── Add Todo Task ───────────────────────────
+    if (action === 'add_todo') {
+      const sheet = getOrCreateSheet(SHEET_NAME_TODO, HEADERS_TODO);
+      const createdDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+      sheet.appendRow([
+        body.id, body.task, body.goal || '', body.urgency || 'Medium',
+        body.location || '', body.dueDate || '', body.postponeTo || '',
+        'Pending', body.notes || '', createdDate, false
+      ]);
+      return corsResponse({ success: true });
+    }
+
+    // ── Update Todo Status ────────────────────────
+    if (action === 'update_todo_status') {
+      const sheet = getOrCreateSheet(SHEET_NAME_TODO, HEADERS_TODO);
+      const rows  = sheet.getDataRange().getValues();
+      for (let i = 1; i < rows.length; i++) {
+        if (String(rows[i][0]) === String(body.id)) {
+          sheet.getRange(i + 1, 8).setValue(body.status);   // col 8 = Status
+          if (body.postponeTo) sheet.getRange(i + 1, 7).setValue(body.postponeTo); // col 7 = PostponeTo
+          break;
+        }
+      }
+      return corsResponse({ success: true });
+    }
+
     // ── Delete ─────────────────────────────────────
     if (action === 'delete') {
       let sheetName, headers, deletedCol;
@@ -267,6 +340,8 @@ function doPost(e) {
         sheetName = SHEET_NAME_CASH; headers = HEADERS_CASH; deletedCol = 8;
       } else if (body.type === 'asset') {
         sheetName = SHEET_NAME_ASSET; headers = HEADERS_ASSET; deletedCol = 10;
+      } else if (body.type === 'todo') {
+        sheetName = SHEET_NAME_TODO; headers = HEADERS_TODO; deletedCol = 11;
       } else {
         sheetName = SHEET_NAME_SCOUT; headers = HEADERS_SCOUT; deletedCol = 7;
       }
