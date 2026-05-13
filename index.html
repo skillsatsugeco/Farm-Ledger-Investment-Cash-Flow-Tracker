@@ -85,6 +85,7 @@
     <button class="nav-tab" data-tab="assets" onclick="switchTab('assets')">🏦 Assets</button>
     <button class="nav-tab" data-tab="scouting" onclick="switchTab('scouting')">📝 Field Scouting</button>
     <button class="nav-tab" data-tab="todos" onclick="switchTab('todos')">✅ Farm To-Do</button>
+    <button class="nav-tab" data-tab="production" onclick="switchTab('production')">🌱 Production</button>
     <button class="nav-tab" data-tab="history" onclick="switchTab('history')">📋 History</button>
   </div>
 
@@ -582,6 +583,832 @@
       </div>
     </div>
 
+    <!-- ══════════ PRODUCTION ACTIVITY TRACKING ══════════ -->
+    <div id="production" class="tab-content">
+
+      <!-- Production Sub-Nav -->
+      <div class="prod-subnav">
+        <button class="prod-subtab active" data-subtab="prod-dashboard" onclick="switchProdTab('prod-dashboard')">📊
+          Overview</button>
+        <button class="prod-subtab" data-subtab="prod-nursery" onclick="switchProdTab('prod-nursery')">🌿
+          Nursery</button>
+        <button class="prod-subtab" data-subtab="prod-transplant" onclick="switchProdTab('prod-transplant')">🪴
+          Transplanting</button>
+        <button class="prod-subtab" data-subtab="prod-fertilizer" onclick="switchProdTab('prod-fertilizer')">🧪
+          Fertilizer</button>
+        <button class="prod-subtab" data-subtab="prod-agrochem" onclick="switchProdTab('prod-agrochem')">🧬
+          Agrochemicals</button>
+        <button class="prod-subtab" data-subtab="prod-weeding" onclick="switchProdTab('prod-weeding')">🌾
+          Weeding</button>
+        <button class="prod-subtab" data-subtab="prod-monitoring" onclick="switchProdTab('prod-monitoring')">👁
+          Monitoring</button>
+        <button class="prod-subtab" data-subtab="prod-harvest" onclick="switchProdTab('prod-harvest')">🚜
+          Harvest</button>
+      </div>
+
+      <!-- ── Production Overview Dashboard ── -->
+      <div id="prod-dashboard" class="prod-subcontent active">
+        <div class="prod-dash-grid">
+          <div class="prod-stat-card" style="border-top-color:#00e676;">
+            <div class="prod-stat-icon">🌿</div>
+            <div class="prod-stat-label">Nursery Activities</div>
+            <div class="prod-stat-value" id="pd-nursery-count">0</div>
+          </div>
+          <div class="prod-stat-card" style="border-top-color:#448aff;">
+            <div class="prod-stat-icon">🪴</div>
+            <div class="prod-stat-label">Transplants</div>
+            <div class="prod-stat-value" id="pd-transplant-count">0</div>
+          </div>
+          <div class="prod-stat-card" style="border-top-color:#ffd740;">
+            <div class="prod-stat-icon">🧪</div>
+            <div class="prod-stat-label">Fertilizer Applications</div>
+            <div class="prod-stat-value" id="pd-fertilizer-count">0</div>
+          </div>
+          <div class="prod-stat-card" style="border-top-color:#ff5252;">
+            <div class="prod-stat-icon">🧬</div>
+            <div class="prod-stat-label">Agrochem Sprays</div>
+            <div class="prod-stat-value" id="pd-agrochem-count">0</div>
+          </div>
+          <div class="prod-stat-card" style="border-top-color:#00b0ff;">
+            <div class="prod-stat-icon">🌾</div>
+            <div class="prod-stat-label">Weeding Operations</div>
+            <div class="prod-stat-value" id="pd-weeding-count">0</div>
+          </div>
+          <div class="prod-stat-card" style="border-top-color:#69f0ae;">
+            <div class="prod-stat-icon">👁</div>
+            <div class="prod-stat-label">Monitoring Logs</div>
+            <div class="prod-stat-value" id="pd-monitoring-count">0</div>
+          </div>
+          <div class="prod-stat-card" style="border-top-color:#ea80fc;">
+            <div class="prod-stat-icon">🚜</div>
+            <div class="prod-stat-label">Harvest Records</div>
+            <div class="prod-stat-value" id="pd-harvest-count">0</div>
+          </div>
+          <div class="prod-stat-card" style="border-top-color:#ff6d00;">
+            <div class="prod-stat-icon">⚠️</div>
+            <div class="prod-stat-label">Overdue / Delayed</div>
+            <div class="prod-stat-value" id="pd-delayed-count" style="color:#ff5252;">0</div>
+          </div>
+        </div>
+        <!-- Upcoming Activities -->
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-header">
+            <div class="panel-title">📅 Upcoming & Pending Activities</div>
+            <select class="filter-select" id="prod-upcoming-filter" onchange="renderProdDashboard()">
+              <option value="all">All Types</option>
+              <option value="nursery">🌿 Nursery</option>
+              <option value="transplanting">🪴 Transplanting</option>
+              <option value="fertilizer">🧪 Fertilizer</option>
+              <option value="agrochem">🧬 Agrochem</option>
+              <option value="weeding">🌾 Weeding</option>
+              <option value="monitoring">👁 Monitoring</option>
+              <option value="harvest">🚜 Harvest</option>
+            </select>
+          </div>
+          <div class="panel-body" id="prod-upcoming-list">
+            <div class="empty-state">
+              <div class="empty-icon">📅</div>
+              <p>No activities yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 1. Nursery & Seedling Management ── -->
+      <div id="prod-nursery" class="prod-subcontent">
+        <div class="add-panel">
+          <div class="section-heading">🌿 Nursery & Seedling Activity</div>
+          <form id="nursery-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="nur-date">Date *</label>
+                <input type="date" id="nur-date" required />
+              </div>
+              <div class="form-group">
+                <label for="nur-location">Farm Location *</label>
+                <input type="text" id="nur-location" placeholder="e.g. Site A" required />
+              </div>
+              <div class="form-group">
+                <label for="nur-activity-type">Activity Type *</label>
+                <select id="nur-activity-type" required>
+                  <option value="" disabled selected>— Select activity —</option>
+                  <option value="Sowing">🌱 Seed Sowing</option>
+                  <option value="Fungicide Application">🧪 Fungicide Application</option>
+                  <option value="Pesticide Application">🐛 Pesticide Application</option>
+                  <option value="Watering">💧 Watering</option>
+                  <option value="Shade Management">☂️ Shade Management</option>
+                  <option value="Thinning">✂️ Thinning/Pricking Out</option>
+                  <option value="Health Check">🔍 Health Check</option>
+                  <option value="Other">📋 Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="nur-crop-type">Crop Type *</label>
+                <input type="text" id="nur-crop-type" placeholder="e.g. Tomato, Maize, Rice" required />
+              </div>
+              <div class="form-group">
+                <label for="nur-variety">Variety</label>
+                <input type="text" id="nur-variety" placeholder="e.g. Roma VF, DK8031" />
+              </div>
+              <div class="form-group">
+                <label for="nur-seed-source">Seed Source</label>
+                <input type="text" id="nur-seed-source" placeholder="e.g. TANSEED, Local market" />
+              </div>
+              <div class="form-group">
+                <label for="nur-nursery-loc">Nursery Location</label>
+                <input type="text" id="nur-nursery-loc" placeholder="e.g. Block N1, Shade House" />
+              </div>
+              <div class="form-group">
+                <label for="nur-qty-seeds">Quantity of Seeds</label>
+                <input type="text" id="nur-qty-seeds" placeholder="e.g. 2kg, 5000 seeds" />
+              </div>
+              <div class="form-group">
+                <label for="nur-fungicide">Fungicide Used</label>
+                <input type="text" id="nur-fungicide" placeholder="e.g. Ridomil 2.5g/L" />
+              </div>
+              <div class="form-group">
+                <label for="nur-pesticide">Pesticide Used</label>
+                <input type="text" id="nur-pesticide" placeholder="e.g. Actellic 15ml/L" />
+              </div>
+              <div class="form-group">
+                <label for="nur-watering">Watering Schedule</label>
+                <input type="text" id="nur-watering" placeholder="e.g. Twice daily, 7AM & 5PM" />
+              </div>
+              <div class="form-group">
+                <label for="nur-shade">Shade Management</label>
+                <input type="text" id="nur-shade" placeholder="e.g. 50% shade net applied" />
+              </div>
+              <div class="form-group">
+                <label for="nur-health">Seedling Health Status</label>
+                <select id="nur-health">
+                  <option value="">— Not assessed —</option>
+                  <option value="Excellent">🟢 Excellent</option>
+                  <option value="Good">🔵 Good</option>
+                  <option value="Fair">🟡 Fair</option>
+                  <option value="Poor">🔴 Poor</option>
+                  <option value="Damping Off">⚠️ Damping Off</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="nur-next-date">Next Action Date</label>
+                <input type="date" id="nur-next-date" />
+              </div>
+              <div class="form-group">
+                <label for="nur-status">Status *</label>
+                <select id="nur-status" required>
+                  <option value="Planned">📋 Planned</option>
+                  <option value="Scheduled">📅 Scheduled</option>
+                  <option value="In Progress">⚙️ In Progress</option>
+                  <option value="Completed" selected>✅ Completed</option>
+                  <option value="Delayed">⏰ Delayed</option>
+                  <option value="Cancelled">❌ Cancelled</option>
+                </select>
+              </div>
+              <div class="form-group form-full">
+                <label for="nur-observations">Observations</label>
+                <textarea id="nur-observations"
+                  placeholder="Detailed observations on seedling health, pest presence, growth…"></textarea>
+              </div>
+              <div class="form-group form-full">
+                <label for="nur-notes">Notes</label>
+                <textarea id="nur-notes" placeholder="Any additional information…"></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary"
+                style="background:linear-gradient(135deg,#00c853,#009624);">🌿 Save Nursery Log</button>
+              <button type="reset" class="btn btn-secondary"
+                onclick="document.getElementById('nur-date').value=today()">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-header">
+            <div class="panel-title">🌿 Nursery Activity Records</div>
+            <div style="display:flex;gap:8px;">
+              <input class="search-box" type="text" id="nur-search" placeholder="🔍 Search…" style="max-width:200px;" />
+              <select class="filter-select" id="nur-filter-status">
+                <option value="all">All Status</option>
+                <option value="Planned">Planned</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Delayed">Delayed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div class="panel-body" id="nursery-list">
+            <div class="empty-state">
+              <div class="empty-icon">🌿</div>
+              <p>No nursery records yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 2. Transplanting Management ── -->
+      <div id="prod-transplant" class="prod-subcontent">
+        <div class="add-panel">
+          <div class="section-heading">🪴 Transplanting Record</div>
+          <form id="transplant-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="tr-date">Date Transplanted *</label>
+                <input type="date" id="tr-date" required />
+              </div>
+              <div class="form-group">
+                <label for="tr-location">Farm Location *</label>
+                <input type="text" id="tr-location" placeholder="e.g. Site A" required />
+              </div>
+              <div class="form-group">
+                <label for="tr-field">Field / Block *</label>
+                <input type="text" id="tr-field" placeholder="e.g. Block B, Field 3" required />
+              </div>
+              <div class="form-group">
+                <label for="tr-crop-type">Crop Type *</label>
+                <input type="text" id="tr-crop-type" placeholder="e.g. Tomato, Cabbage" required />
+              </div>
+              <div class="form-group">
+                <label for="tr-seedlings">Number of Seedlings *</label>
+                <input type="number" id="tr-seedlings" placeholder="e.g. 5000" required />
+              </div>
+              <div class="form-group">
+                <label for="tr-spacing">Spacing Used</label>
+                <input type="text" id="tr-spacing" placeholder="e.g. 60cm x 30cm" />
+              </div>
+              <div class="form-group">
+                <label for="tr-personnel">Responsible Personnel</label>
+                <input type="text" id="tr-personnel" placeholder="e.g. John, Team A" />
+              </div>
+              <div class="form-group">
+                <label for="tr-success">Success Rate (%)</label>
+                <input type="text" id="tr-success" placeholder="e.g. 92%, 95%" />
+              </div>
+              <div class="form-group">
+                <label for="tr-establishment">Field Establishment Status</label>
+                <select id="tr-establishment">
+                  <option value="">— Not assessed —</option>
+                  <option value="Excellent — >95% survival">🟢 Excellent — >95% survival</option>
+                  <option value="Good — 80-95% survival">🔵 Good — 80-95%</option>
+                  <option value="Fair — 60-80% survival">🟡 Fair — 60-80%</option>
+                  <option value="Poor — <60% survival">🔴 Poor — <60%< /option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="tr-status">Status *</label>
+                <select id="tr-status" required>
+                  <option value="Planned">📋 Planned</option>
+                  <option value="Scheduled">📅 Scheduled</option>
+                  <option value="In Progress">⚙️ In Progress</option>
+                  <option value="Completed" selected>✅ Completed</option>
+                  <option value="Delayed">⏰ Delayed</option>
+                  <option value="Cancelled">❌ Cancelled</option>
+                </select>
+              </div>
+              <div class="form-group form-full">
+                <label for="tr-notes">Notes</label>
+                <textarea id="tr-notes" placeholder="Additional notes, challenges encountered…"></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary"
+                style="background:linear-gradient(135deg,#448aff,#1565c0);">🪴 Save Transplant Record</button>
+              <button type="reset" class="btn btn-secondary"
+                onclick="document.getElementById('tr-date').value=today()">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-header">
+            <div class="panel-title">🪴 Transplanting Records</div>
+            <select class="filter-select" id="tr-filter-status">
+              <option value="all">All Status</option>
+              <option value="Planned">Planned</option>
+              <option value="Completed">Completed</option>
+              <option value="Delayed">Delayed</option>
+            </select>
+          </div>
+          <div class="panel-body" id="transplant-list">
+            <div class="empty-state">
+              <div class="empty-icon">🪴</div>
+              <p>No transplanting records yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 3. Fertilizer Application ── -->
+      <div id="prod-fertilizer" class="prod-subcontent">
+        <div class="add-panel">
+          <div class="section-heading">🧪 Fertilizer Application</div>
+          <form id="fertilizer-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="fert-date">Application Date *</label>
+                <input type="date" id="fert-date" required />
+              </div>
+              <div class="form-group">
+                <label for="fert-location">Farm Location *</label>
+                <input type="text" id="fert-location" placeholder="e.g. Site A" required />
+              </div>
+              <div class="form-group">
+                <label for="fert-field">Field / Block *</label>
+                <input type="text" id="fert-field" placeholder="e.g. Block A, Field 2" required />
+              </div>
+              <div class="form-group">
+                <label for="fert-crop-type">Crop Type</label>
+                <input type="text" id="fert-crop-type" placeholder="e.g. Maize, Tomato" />
+              </div>
+              <div class="form-group">
+                <label for="fert-type">Fertilizer Type *</label>
+                <select id="fert-type" required>
+                  <option value="" disabled selected>— Select type —</option>
+                  <option value="Basal (DAP)">Basal — DAP</option>
+                  <option value="Basal (NPK)">Basal — NPK</option>
+                  <option value="Basal (SSP)">Basal — SSP</option>
+                  <option value="Top Dressing (CAN)">Top Dressing — CAN</option>
+                  <option value="Top Dressing (Urea)">Top Dressing — Urea</option>
+                  <option value="Broadcasting (NPK)">Broadcasting — NPK</option>
+                  <option value="Foliar Feeding">Foliar Feeding</option>
+                  <option value="Organic (Compost)">Organic — Compost</option>
+                  <option value="Organic (Manure)">Organic — Manure</option>
+                  <option value="Liquid Fertilizer">Liquid Fertilizer</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="fert-method">Application Method</label>
+                <select id="fert-method">
+                  <option value="">— Select method —</option>
+                  <option value="Basal Application">Basal Application</option>
+                  <option value="Top Dressing">Top Dressing</option>
+                  <option value="Broadcasting">Broadcasting</option>
+                  <option value="Foliar Spray">Foliar Spray</option>
+                  <option value="Fertigation">Fertigation (via Irrigation)</option>
+                  <option value="Banding">Banding</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="fert-qty">Quantity Applied *</label>
+                <input type="text" id="fert-qty" placeholder="e.g. 50kg, 10L" required />
+              </div>
+              <div class="form-group">
+                <label for="fert-applied-by">Applied By</label>
+                <input type="text" id="fert-applied-by" placeholder="e.g. John Mwangi" />
+              </div>
+              <div class="form-group">
+                <label for="fert-next">Next Scheduled Application</label>
+                <input type="date" id="fert-next" />
+              </div>
+              <div class="form-group">
+                <label for="fert-status">Status *</label>
+                <select id="fert-status" required>
+                  <option value="Planned">📋 Planned</option>
+                  <option value="Scheduled">📅 Scheduled</option>
+                  <option value="In Progress">⚙️ In Progress</option>
+                  <option value="Completed" selected>✅ Completed</option>
+                  <option value="Delayed">⏰ Delayed</option>
+                  <option value="Cancelled">❌ Cancelled</option>
+                </select>
+              </div>
+              <div class="form-group form-full">
+                <label for="fert-notes">Notes</label>
+                <textarea id="fert-notes" placeholder="Additional notes, observations after application…"></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary"
+                style="background:linear-gradient(135deg,#ffd740,#f9a825);color:#001;">🧪 Save Fertilizer
+                Record</button>
+              <button type="reset" class="btn btn-secondary"
+                onclick="document.getElementById('fert-date').value=today()">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-header">
+            <div class="panel-title">🧪 Fertilizer Application Records</div>
+            <select class="filter-select" id="fert-filter-status">
+              <option value="all">All Status</option>
+              <option value="Planned">Planned</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="Completed">Completed</option>
+              <option value="Delayed">Delayed</option>
+            </select>
+          </div>
+          <div class="panel-body" id="fertilizer-list">
+            <div class="empty-state">
+              <div class="empty-icon">🧪</div>
+              <p>No fertilizer records yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 4. Agrochemical Management ── -->
+      <div id="prod-agrochem" class="prod-subcontent">
+        <div class="add-panel">
+          <div class="section-heading">🧬 Agrochemical Application</div>
+          <form id="agrochem-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="agro-date">Application Date *</label>
+                <input type="date" id="agro-date" required />
+              </div>
+              <div class="form-group">
+                <label for="agro-location">Farm Location *</label>
+                <input type="text" id="agro-location" placeholder="e.g. Site A" required />
+              </div>
+              <div class="form-group">
+                <label for="agro-field">Field / Block *</label>
+                <input type="text" id="agro-field" placeholder="e.g. Block B" required />
+              </div>
+              <div class="form-group">
+                <label for="agro-chem-type">Chemical Type *</label>
+                <select id="agro-chem-type" required>
+                  <option value="" disabled selected>— Select type —</option>
+                  <option value="Pesticide">🐛 Pesticide</option>
+                  <option value="Herbicide">🌿 Herbicide / Weedicide</option>
+                  <option value="Fungicide">🍄 Fungicide</option>
+                  <option value="Insecticide">🦟 Insecticide</option>
+                  <option value="Acaricide">🕷️ Acaricide</option>
+                  <option value="Nematicide">🪱 Nematicide</option>
+                  <option value="Growth Regulator">🧬 Plant Growth Regulator</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="agro-chem-name">Chemical Name *</label>
+                <input type="text" id="agro-chem-name" placeholder="e.g. Roundup, Dimethoate" required />
+              </div>
+              <div class="form-group">
+                <label for="agro-active">Active Ingredient</label>
+                <input type="text" id="agro-active" placeholder="e.g. Glyphosate 360g/L" />
+              </div>
+              <div class="form-group">
+                <label for="agro-target">Target Pest / Disease / Weed *</label>
+                <input type="text" id="agro-target" placeholder="e.g. Armyworm, Fusarium wilt" required />
+              </div>
+              <div class="form-group">
+                <label for="agro-rate">Application Rate</label>
+                <input type="text" id="agro-rate" placeholder="e.g. 2L/ha, 15ml/L water" />
+              </div>
+              <div class="form-group">
+                <label for="agro-reentry">Re-Entry Interval</label>
+                <input type="text" id="agro-reentry" placeholder="e.g. 24 hours, 48 hours" />
+              </div>
+              <div class="form-group">
+                <label for="agro-preharvest">Pre-Harvest Interval</label>
+                <input type="text" id="agro-preharvest" placeholder="e.g. 7 days, 14 days" />
+              </div>
+              <div class="form-group">
+                <label for="agro-next-spray">Next Spray Date</label>
+                <input type="date" id="agro-next-spray" />
+              </div>
+              <div class="form-group">
+                <label for="agro-applied-by">Applied By</label>
+                <input type="text" id="agro-applied-by" placeholder="e.g. Spray crew A" />
+              </div>
+              <div class="form-group">
+                <label for="agro-status">Status *</label>
+                <select id="agro-status" required>
+                  <option value="Planned">📋 Planned</option>
+                  <option value="Scheduled">📅 Scheduled</option>
+                  <option value="In Progress">⚙️ In Progress</option>
+                  <option value="Completed" selected>✅ Completed</option>
+                  <option value="Delayed">⏰ Delayed</option>
+                  <option value="Cancelled">❌ Cancelled</option>
+                </select>
+              </div>
+              <div class="form-group form-full">
+                <label for="agro-notes">Notes</label>
+                <textarea id="agro-notes"
+                  placeholder="Weather conditions during spray, equipment used, PPE worn…"></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary"
+                style="background:linear-gradient(135deg,#ff5252,#b71c1c);">🧬 Save Agrochem Record</button>
+              <button type="reset" class="btn btn-secondary"
+                onclick="document.getElementById('agro-date').value=today()">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-header">
+            <div class="panel-title">🧬 Agrochemical Records</div>
+            <div style="display:flex;gap:8px;">
+              <select class="filter-select" id="agro-filter-type">
+                <option value="all">All Types</option>
+                <option value="Pesticide">Pesticide</option>
+                <option value="Herbicide">Herbicide</option>
+                <option value="Fungicide">Fungicide</option>
+                <option value="Insecticide">Insecticide</option>
+              </select>
+              <select class="filter-select" id="agro-filter-status">
+                <option value="all">All Status</option>
+                <option value="Planned">Planned</option>
+                <option value="Completed">Completed</option>
+                <option value="Delayed">Delayed</option>
+              </select>
+            </div>
+          </div>
+          <div class="panel-body" id="agrochem-list">
+            <div class="empty-state">
+              <div class="empty-icon">🧬</div>
+              <p>No agrochemical records yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 5. Weeding ── -->
+      <div id="prod-weeding" class="prod-subcontent">
+        <div class="add-panel">
+          <div class="section-heading">🌾 Weeding Operation</div>
+          <form id="weeding-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="weed-date">Date *</label>
+                <input type="date" id="weed-date" required />
+              </div>
+              <div class="form-group">
+                <label for="weed-location">Farm Location *</label>
+                <input type="text" id="weed-location" placeholder="e.g. Site A" required />
+              </div>
+              <div class="form-group">
+                <label for="weed-field">Field / Block *</label>
+                <input type="text" id="weed-field" placeholder="e.g. Block C" required />
+              </div>
+              <div class="form-group">
+                <label for="weed-method">Weeding Method *</label>
+                <select id="weed-method" required>
+                  <option value="" disabled selected>— Select method —</option>
+                  <option value="Manual (Hand weeding)">✋ Manual — Hand Weeding</option>
+                  <option value="Mechanical (Cultivator)">🚜 Mechanical — Cultivator</option>
+                  <option value="Mechanical (Tractor)">🚜 Mechanical — Tractor</option>
+                  <option value="Chemical (Herbicide)">🧪 Chemical — Herbicide</option>
+                  <option value="Mulching">🌿 Mulching</option>
+                  <option value="Combined">🔄 Combined Methods</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="weed-labor">Labor Used</label>
+                <input type="text" id="weed-labor" placeholder="e.g. 10 workers, 2 tractor hrs" />
+              </div>
+              <div class="form-group">
+                <label for="weed-area">Area Covered</label>
+                <input type="text" id="weed-area" placeholder="e.g. 2 acres, 0.5 ha" />
+              </div>
+              <div class="form-group">
+                <label for="weed-next">Next Weeding Date</label>
+                <input type="date" id="weed-next" />
+              </div>
+              <div class="form-group">
+                <label for="weed-status">Status *</label>
+                <select id="weed-status" required>
+                  <option value="Planned">📋 Planned</option>
+                  <option value="Scheduled">📅 Scheduled</option>
+                  <option value="In Progress">⚙️ In Progress</option>
+                  <option value="Completed" selected>✅ Completed</option>
+                  <option value="Delayed">⏰ Delayed</option>
+                  <option value="Cancelled">❌ Cancelled</option>
+                </select>
+              </div>
+              <div class="form-group form-full">
+                <label for="weed-notes">Notes</label>
+                <textarea id="weed-notes" placeholder="Weed species noted, challenges, outcome…"></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary"
+                style="background:linear-gradient(135deg,#00b0ff,#006699);">🌾 Save Weeding Record</button>
+              <button type="reset" class="btn btn-secondary"
+                onclick="document.getElementById('weed-date').value=today()">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-header">
+            <div class="panel-title">🌾 Weeding Records</div>
+            <select class="filter-select" id="weed-filter-status">
+              <option value="all">All Status</option>
+              <option value="Planned">Planned</option>
+              <option value="Completed">Completed</option>
+              <option value="Delayed">Delayed</option>
+            </select>
+          </div>
+          <div class="panel-body" id="weeding-list">
+            <div class="empty-state">
+              <div class="empty-icon">🌾</div>
+              <p>No weeding records yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 6. Crop Monitoring ── -->
+      <div id="prod-monitoring" class="prod-subcontent">
+        <div class="add-panel">
+          <div class="section-heading">👁 Crop Monitoring & Follow-up</div>
+          <form id="monitoring-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="mon-date">Monitoring Date *</label>
+                <input type="date" id="mon-date" required />
+              </div>
+              <div class="form-group">
+                <label for="mon-location">Farm Location *</label>
+                <input type="text" id="mon-location" placeholder="e.g. Site A" required />
+              </div>
+              <div class="form-group">
+                <label for="mon-field">Field / Block *</label>
+                <input type="text" id="mon-field" placeholder="e.g. Block D" required />
+              </div>
+              <div class="form-group">
+                <label for="mon-crop-type">Crop Type</label>
+                <input type="text" id="mon-crop-type" placeholder="e.g. Maize, Tomato" />
+              </div>
+              <div class="form-group">
+                <label for="mon-growth-stage">Growth Stage</label>
+                <select id="mon-growth-stage">
+                  <option value="">— Select stage —</option>
+                  <option value="Germination">🌱 Germination</option>
+                  <option value="Seedling">🌿 Seedling</option>
+                  <option value="Vegetative">🍃 Vegetative</option>
+                  <option value="Flowering">🌸 Flowering</option>
+                  <option value="Fruiting">🍅 Fruiting / Grain Filling</option>
+                  <option value="Maturation">🌾 Maturation</option>
+                  <option value="Ready for Harvest">🚜 Ready for Harvest</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="mon-health">Plant Health Observation</label>
+                <select id="mon-health">
+                  <option value="">— Assess health —</option>
+                  <option value="Excellent — No issues">🟢 Excellent — No Issues</option>
+                  <option value="Good — Minor issues">🔵 Good — Minor Issues</option>
+                  <option value="Fair — Needs attention">🟡 Fair — Needs Attention</option>
+                  <option value="Poor — Serious problems">🔴 Poor — Serious Problems</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="mon-disease">Disease Incidence</label>
+                <input type="text" id="mon-disease" placeholder="e.g. Blight — 10% of plants, None" />
+              </div>
+              <div class="form-group">
+                <label for="mon-pest">Pest Infestation</label>
+                <input type="text" id="mon-pest" placeholder="e.g. Armyworm — moderate, None" />
+              </div>
+              <div class="form-group">
+                <label for="mon-weather">Weather-Related Impacts</label>
+                <input type="text" id="mon-weather" placeholder="e.g. Drought stress, Flooding, Hailstorm damage" />
+              </div>
+              <div class="form-group">
+                <label for="mon-status">Status</label>
+                <select id="mon-status">
+                  <option value="Completed" selected>✅ Completed</option>
+                  <option value="In Progress">⚙️ In Progress</option>
+                  <option value="Planned">📋 Planned</option>
+                </select>
+              </div>
+              <div class="form-group form-full">
+                <label for="mon-notes">Detailed Notes & Recommendations</label>
+                <textarea id="mon-notes" placeholder="Observations, recommended actions, follow-up needed…"></textarea>
+              </div>
+              <div class="form-group form-full">
+                <label>Field Photo <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                <input type="file" id="mon-photo" accept="image/*" capture="environment"
+                  style="background:rgba(255,255,255,0.06);border:1px solid var(--glass-border);border-radius:8px;padding:8px;color:var(--text-primary);" />
+                <img id="mon-photo-preview" style="max-width:100%;margin-top:10px;border-radius:8px;display:none;" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary"
+                style="background:linear-gradient(135deg,#69f0ae,#00897b);color:#001;">👁 Save Monitoring Log</button>
+              <button type="reset" class="btn btn-secondary"
+                onclick="document.getElementById('mon-date').value=today();document.getElementById('mon-photo-preview').style.display='none';">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-header">
+            <div class="panel-title">👁 Crop Monitoring Logs</div>
+            <input class="search-box" type="text" id="mon-search" placeholder="🔍 Search…" style="max-width:200px;" />
+          </div>
+          <div class="panel-body" id="monitoring-list">
+            <div class="empty-state">
+              <div class="empty-icon">👁</div>
+              <p>No monitoring logs yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 7. Harvesting Management ── -->
+      <div id="prod-harvest" class="prod-subcontent">
+        <div class="add-panel">
+          <div class="section-heading">🚜 Harvest Record</div>
+          <form id="harvest-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="har-date">Harvest Date *</label>
+                <input type="date" id="har-date" required />
+              </div>
+              <div class="form-group">
+                <label for="har-location">Farm Location *</label>
+                <input type="text" id="har-location" placeholder="e.g. Site A" required />
+              </div>
+              <div class="form-group">
+                <label for="har-field">Field / Block *</label>
+                <input type="text" id="har-field" placeholder="e.g. Block E, Field 1" required />
+              </div>
+              <div class="form-group">
+                <label for="har-crop-type">Crop Harvested *</label>
+                <input type="text" id="har-crop-type" placeholder="e.g. Tomato, Maize" required />
+              </div>
+              <div class="form-group">
+                <label for="har-quantity">Quantity Harvested *</label>
+                <input type="text" id="har-quantity" placeholder="e.g. 500, 1200" required />
+              </div>
+              <div class="form-group">
+                <label for="har-unit">Unit</label>
+                <select id="har-unit">
+                  <option value="kg">kg</option>
+                  <option value="tonnes">tonnes</option>
+                  <option value="bags (90kg)">bags (90kg)</option>
+                  <option value="bags (50kg)">bags (50kg)</option>
+                  <option value="crates">crates</option>
+                  <option value="boxes">boxes</option>
+                  <option value="litres">litres</option>
+                  <option value="bunches">bunches</option>
+                  <option value="pieces">pieces</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="har-grade">Grade / Quality</label>
+                <select id="har-grade">
+                  <option value="">— Not graded —</option>
+                  <option value="Grade A — Export quality">Grade A — Export Quality</option>
+                  <option value="Grade B — Local market">Grade B — Local Market</option>
+                  <option value="Grade C — Processing">Grade C — Processing</option>
+                  <option value="Mixed">Mixed</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="har-losses">Losses Recorded</label>
+                <input type="text" id="har-losses" placeholder="e.g. 5%, 50kg due to rot" />
+              </div>
+              <div class="form-group">
+                <label for="har-cycle">Harvest Cycle</label>
+                <select id="har-cycle">
+                  <option value="Cycle 1">Cycle 1 — First Harvest</option>
+                  <option value="Cycle 2">Cycle 2 — Second Harvest</option>
+                  <option value="Cycle 3">Cycle 3 — Third Harvest</option>
+                  <option value="Cycle 4">Cycle 4</option>
+                  <option value="Cycle 5">Cycle 5</option>
+                  <option value="Final Harvest">Final Harvest</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="har-status">Status *</label>
+                <select id="har-status" required>
+                  <option value="Planned">📋 Planned</option>
+                  <option value="Scheduled">📅 Scheduled</option>
+                  <option value="In Progress">⚙️ In Progress</option>
+                  <option value="Completed" selected>✅ Completed</option>
+                  <option value="Delayed">⏰ Delayed</option>
+                </select>
+              </div>
+              <div class="form-group form-full">
+                <label for="har-notes">Notes</label>
+                <textarea id="har-notes"
+                  placeholder="Market destination, post-harvest handling, storage notes…"></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary"
+                style="background:linear-gradient(135deg,#ea80fc,#8e24aa);">🚜 Save Harvest Record</button>
+              <button type="reset" class="btn btn-secondary"
+                onclick="document.getElementById('har-date').value=today()">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-header">
+            <div class="panel-title">🚜 Harvest Records</div>
+            <input class="search-box" type="text" id="har-search" placeholder="🔍 Search…" style="max-width:200px;" />
+          </div>
+          <div class="panel-body" id="harvest-list">
+            <div class="empty-state">
+              <div class="empty-icon">🚜</div>
+              <p>No harvest records yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
     <!-- ══════════ HISTORY ══════════ -->
     <div id="history" class="tab-content">
       <div class="panel" style="border-top:none;border-radius:0 var(--radius) var(--radius) var(--radius);">
